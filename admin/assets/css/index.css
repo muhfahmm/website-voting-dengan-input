@@ -1,0 +1,119 @@
+
+
+        header {
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table thead {
+            background: #2c3e50;
+            color: #fff;
+        }
+
+        table th,
+        table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        /* Diagram batang */
+        .bar-chart {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .bar-label {
+            width: 200px;
+            font-weight: bold;
+        }
+
+        .bar-fill {
+            height: 25px;
+            background: #3498db;
+            text-align: right;
+            color: #fff;
+            line-height: 25px;
+            padding-right: 8px;
+            border-radius: 5px;
+        }
+
+        .bar-fill.red {
+            background: #e74c3c;
+        }
+
+        .bar-fill.green {
+            background: #2ecc71;
+        }
+
+                .bar-chart {
+            margin-top: 20px;
+            margin-bottom: 100px;
+        }
+
+        .bar {
+            margin: 15px 0;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+            padding: 5px;
+            width: 100%;
+        }
+
+        .bar-fill {
+            height: 50px;
+            border-radius: 4px;
+            background: #3498db;
+            position: relative;
+            overflow: hidden;
+            transition: width 0.5s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .bar-percent {
+            font-size: 13px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .bar-name {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .chart-container {
+            width: 45%;
+            margin: 20px;
+            display: inline-block;
+            vertical-align: top;
+        }
