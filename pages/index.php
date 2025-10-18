@@ -278,7 +278,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
     </style>
 </head>
 
-<body style="background-color: grey;">
+<body>
     <div class="container">
         <div class="title">
             <div class="logo">
