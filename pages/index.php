@@ -4,7 +4,7 @@ require '../db/db.php';
 
 // proses vote
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
-    $nama_pemilih      = trim($_POST['pemilih'] ?? '');
+    $token_pemilih      = trim($_POST['token_pemilih'] ?? '');
     $role              = trim($_POST['role'] ?? 'siswa');
     $kelas_pemilih     = trim($_POST['kelas'] ?? '');
     $kandidat_terpilih = (int) ($_POST['kandidat_terpilih'] ?? 0);
@@ -12,7 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     $errorMessage = "";
     $successMessage = "";
 
-    if ($nama_pemilih === '' || $kandidat_terpilih <= 0) {
+    if ($token_pemilih === '' || $kandidat_terpilih <= 0) {
         $errorMessage = "Input nama dan kandidat wajib diisi!";
     } elseif (!in_array($role, ['siswa', 'guru'])) {
         $errorMessage = "Role tidak valid.";
@@ -23,7 +23,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
         mysqli_begin_transaction($db);
         try {
             $voter = mysqli_prepare($db, "INSERT INTO tb_voter (nama_voter, kelas, role, created_at) VALUES (?, ?, ?, NOW())");
-            mysqli_stmt_bind_param($voter, "sss", $nama_pemilih, $kelas_db, $role);
+            mysqli_stmt_bind_param($voter, "sss", $token_pemilih, $kelas_db, $role);
             mysqli_stmt_execute($voter);
             $voter_id = mysqli_insert_id($db);
             mysqli_stmt_close($voter);
@@ -278,7 +278,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
     </style>
 </head>
 
-<body>
+<body style="background-color: grey;">
     <div class="container">
         <div class="title">
             <div class="logo">
@@ -328,7 +328,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             </div>
             <form action="" method="post" id="formVote" novalidate>
                 <label for="pemilih" style="font-weight: bold;">Token Pemilih</label>
-                <input type="text" id="pemilih" name="pemilih" placeholder="Masukkan Token" autocomplete="off">
+                <input type="text" id="pemilih" name="token_pemilih" placeholder="Masukkan Token" autocomplete="off">
                 <label for="role" style="font-weight: bold;">Role</label>
                 <select id="role" name="role">
                     <option value="siswa" selected>Siswa</option>
