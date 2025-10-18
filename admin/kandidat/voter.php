@@ -10,7 +10,7 @@ if (!isset($_SESSION['login'])) {
 $admin = $_SESSION['username'];
 
 // jumlah data per halaman
-$limit = 10;
+$limit = 15;
 
 // halaman untuk siswa & guru
 $pageSiswa = isset($_GET['page_siswa']) ? (int)$_GET['page_siswa'] : 1;
@@ -76,7 +76,7 @@ $dataKelas = [
     "X-1" => 21,
     "X-2" => 18 ,
     "XI-1" => 29,
-    "XI-2" => 16,
+    "XI-2" => 17,
     "XI-TJA" => 11,
     "XII" => 29
 ];

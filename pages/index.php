@@ -2,7 +2,6 @@
 session_start();
 require '../db/db.php';
 
-// proses vote
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     $token_pemilih      = trim($_POST['token_pemilih'] ?? '');
     $role              = trim($_POST['role'] ?? 'siswa');
@@ -11,6 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
 
     $errorMessage = "";
     $successMessage = "";
+    $tokenUsedMessage = "";
 
     if ($token_pemilih === '' || $kandidat_terpilih <= 0) {
         $errorMessage = "Input nama dan kandidat wajib diisi!";
@@ -19,35 +19,46 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     } elseif ($role === 'siswa' && $kelas_pemilih === '') {
         $errorMessage = "Untuk siswa, kelas wajib diisi.";
     } else {
-        $kelas_db = ($role === 'siswa') ? $kelas_pemilih : '';
-        mysqli_begin_transaction($db);
-        try {
-            $voter = mysqli_prepare($db, "INSERT INTO tb_voter (nama_voter, kelas, role, created_at) VALUES (?, ?, ?, NOW())");
-            mysqli_stmt_bind_param($voter, "sss", $token_pemilih, $kelas_db, $role);
-            mysqli_stmt_execute($voter);
-            $voter_id = mysqli_insert_id($db);
-            mysqli_stmt_close($voter);
+        // cek apakah token sudah digunakan
+        $check = mysqli_prepare($db, "SELECT id FROM tb_voter WHERE nama_voter = ?");
+        mysqli_stmt_bind_param($check, "s", $token_pemilih);
+        mysqli_stmt_execute($check);
+        mysqli_stmt_store_result($check);
+        $token_exists = mysqli_stmt_num_rows($check) > 0;
+        mysqli_stmt_close($check);
 
-            $vote_log = mysqli_prepare($db, "INSERT INTO tb_vote_log (voter_id, nomor_kandidat, created_at) VALUES (?, ?, NOW())");
-            mysqli_stmt_bind_param($vote_log, "ii", $voter_id, $kandidat_terpilih);
-            mysqli_stmt_execute($vote_log);
-            mysqli_stmt_close($vote_log);
+        if ($token_exists) {
+            $tokenUsedMessage = "Token sudah digunakan.";
+        } else {
+            $kelas_db = ($role === 'siswa') ? $kelas_pemilih : '';
+            mysqli_begin_transaction($db);
+            try {
+                $voter = mysqli_prepare($db, "INSERT INTO tb_voter (nama_voter, kelas, role, created_at) VALUES (?, ?, ?, NOW())");
+                mysqli_stmt_bind_param($voter, "sss", $token_pemilih, $kelas_db, $role);
+                mysqli_stmt_execute($voter);
+                $voter_id = mysqli_insert_id($db);
+                mysqli_stmt_close($voter);
 
-            $update = mysqli_prepare($db, "UPDATE tb_vote_result SET jumlah_vote = jumlah_vote + 1 WHERE nomor_kandidat = ?");
-            mysqli_stmt_bind_param($update, "i", $kandidat_terpilih);
-            mysqli_stmt_execute($update);
-            mysqli_stmt_close($update);
+                $vote_log = mysqli_prepare($db, "INSERT INTO tb_vote_log (voter_id, nomor_kandidat, created_at) VALUES (?, ?, NOW())");
+                mysqli_stmt_bind_param($vote_log, "ii", $voter_id, $kandidat_terpilih);
+                mysqli_stmt_execute($vote_log);
+                mysqli_stmt_close($vote_log);
 
-            mysqli_commit($db);
+                $update = mysqli_prepare($db, "UPDATE tb_vote_result SET jumlah_vote = jumlah_vote + 1 WHERE nomor_kandidat = ?");
+                mysqli_stmt_bind_param($update, "i", $kandidat_terpilih);
+                mysqli_stmt_execute($update);
+                mysqli_stmt_close($update);
 
-            $successMessage = "Vote berhasil! Terima kasih sudah memilih.";
-        } catch (mysqli_sql_exception $e) {
-            mysqli_rollback($db);
-            $errorMessage = "Terjadi kesalahan: " . $e->getMessage();
+                mysqli_commit($db);
+                $successMessage = "Vote berhasil! Terima kasih sudah memilih.";
+            } catch (mysqli_sql_exception $e) {
+                mysqli_rollback($db);
+                $errorMessage = "Terjadi kesalahan: " . $e->getMessage();
+            }
         }
     }
 }
-// ambil kandidat
+
 $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat ASC");
 ?>
 <!DOCTYPE html>
@@ -280,6 +291,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 
 <body>
     <div class="container">
+        <!-- Kandidat dan form tetap -->
         <div class="title">
             <h1>Selamat Datang di Forum Pemilihan Osis Skalsa</h1>
             <div class="logo">
@@ -323,10 +335,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
         </div>
 
         <div class="form-user">
-            <div style="display: flex; align-items:center; gap: 10px;">
-                <h3>Form Pemilih</h3>
-                <p style="color: red; text-align:center; margin: 0;">( Wajib Diisi )</p>
-            </div>
             <form action="" method="post" id="formVote" novalidate>
                 <label for="pemilih" style="font-weight: bold;">Token Pemilih</label>
                 <input type="text" id="pemilih" name="token_pemilih" placeholder="Masukkan Token" autocomplete="off">
@@ -359,7 +367,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
         <div class="modal-content">
             <span class="close">&times;</span>
             <h2>Vote Berhasil!</h2>
-            <p class="text-terimakasih">Terima kasih sudah memilih. Semoga pilihanmu bisa menang yakk.</p>
+            <p class="text-terimakasih">Terima kasih sudah memilih. Semoga pilihanmu menang.</p>
             <button id="okBtn" class="button-ok" style="cursor: pointer;">OK</button>
         </div>
     </div>
@@ -368,10 +376,19 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
     <div id="modalError" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <div class="icon"></div>
             <h2>Terjadi Kesalahan</h2>
             <p id="errorText"></p>
             <button id="errorBtn" class="button-ok" style="cursor: pointer;">OK</button>
+        </div>
+    </div>
+
+    <!-- Modal Token Digunakan -->
+    <div id="modalTokenUsed" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Token Sudah Digunakan</h2>
+            <p>Token ini sudah dipakai untuk memilih.</p>
+            <button id="tokenUsedBtn" class="button-ok" style="cursor: pointer;">OK</button>
         </div>
     </div>
 
@@ -385,44 +402,40 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             roleSelect.addEventListener('change', () => {
                 kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
             });
-            kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
 
             kandidatCards.forEach(card => {
                 const btn = card.querySelector('button');
                 btn.addEventListener('click', () => {
-                    if (card.classList.contains('active')) {
-                        card.classList.remove('active');
-                        btn.textContent = "Pilih Kandidat";
-                        inputKandidat.value = "";
-                    } else {
-                        kandidatCards.forEach(c => {
-                            c.classList.remove('active');
-                            c.querySelector('button').textContent = "Pilih Kandidat";
-                        });
-                        card.classList.add('active');
-                        btn.textContent = "Dipilih";
-                        inputKandidat.value = card.getAttribute('data-id');
-                    }
+                    kandidatCards.forEach(c => {
+                        c.classList.remove('active');
+                        c.querySelector('button').textContent = "Pilih Kandidat";
+                    });
+                    card.classList.add('active');
+                    btn.textContent = "Dipilih";
+                    inputKandidat.value = card.getAttribute('data-id');
                 });
             });
 
             const modalSuccess = document.getElementById('modalSuccess');
             const modalError = document.getElementById('modalError');
+            const modalTokenUsed = document.getElementById('modalTokenUsed');
             const errorText = document.getElementById('errorText');
 
-            const closeBtns = document.querySelectorAll('.modal .close, #okBtn, #errorBtn');
+            const closeBtns = document.querySelectorAll('.modal .close, #okBtn, #errorBtn, #tokenUsedBtn');
             closeBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     modalSuccess.style.display = 'none';
                     modalError.style.display = 'none';
+                    modalTokenUsed.style.display = 'none';
                     window.location.href = 'index.php';
                 });
             });
 
             window.onclick = (e) => {
-                if (e.target === modalSuccess || e.target === modalError) {
+                if (e.target === modalSuccess || e.target === modalError || e.target === modalTokenUsed) {
                     modalSuccess.style.display = 'none';
                     modalError.style.display = 'none';
+                    modalTokenUsed.style.display = 'none';
                     window.location.href = 'index.php';
                 }
             };
@@ -432,6 +445,8 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             <?php elseif (!empty($errorMessage)) : ?>
                 errorText.innerText = "<?= $errorMessage ?>";
                 modalError.style.display = 'flex';
+            <?php elseif (!empty($tokenUsedMessage)) : ?>
+                modalTokenUsed.style.display = 'flex';
             <?php endif; ?>
         });
     </script>
