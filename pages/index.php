@@ -281,6 +281,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 <body>
     <div class="container">
         <div class="title">
+            <h1>Selamat Datang di Forum Pemilihan Osis Skalsa</h1>
             <div class="logo">
                 <img src="assets/img/logo osis.png">
                 <img src="assets/img/logo sekolah.png">

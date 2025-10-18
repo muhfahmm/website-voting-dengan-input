@@ -12,9 +12,9 @@ $admin = $_SESSION['username'];
 
 $dataKelas = [
     "X-1" => 21,
-    "X-2" => 18 ,
+    "X-2" => 18,
     "XI-1" => 29,
-    "XI-2" => 16,
+    "XI-2" => 17,
     "XI-TJA" => 11,
     "XII" => 29
 ];
@@ -113,7 +113,7 @@ $totalVotes = $totalRow['total'];
         }
 
         .bar-fill {
-            height: 50px;
+            height: 40px;
             border-radius: 4px;
             background: #3498db;
             position: relative;
@@ -167,6 +167,13 @@ $totalVotes = $totalRow['total'];
     <div class="main-content">
         <h2 style="margin-bottom: 20px; text-align:center;">Hasil Sementara</h2>
         <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px;"> Total Siswa: <?= $total_siswa; ?> | Sudah Voting: <?= $totalVotes; ?> | Belum Voting: <?= $total_siswa - $totalVotes; ?> </div>
+
+        <div class="chart-container">
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-container">
+            <canvas id="barChart"></canvas>
+        </div>
         <div class="bar-chart">
             <?php
             while ($row = mysqli_fetch_assoc($query)) {
@@ -179,16 +186,6 @@ $totalVotes = $totalRow['total'];
                     </div>
                 </div>
             <?php } ?>
-        </div>
-
-        <div class="result-container">
-            <div class="chart-container">
-                <canvas id="pieChart"></canvas>
-            </div>
-            <br>
-            <div class="chart-container">
-                <canvas id="barChart"></canvas>
-            </div>
         </div>
     </div>
 
