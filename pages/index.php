@@ -129,6 +129,7 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 
         .card img {
             width: 100%;
+            height: 350px;
             aspect-ratio: 1/1;
             object-fit: cover;
             border-radius: 8px;
