@@ -83,7 +83,8 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 
         .title h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin: 0;
+            padding: 0 20%;
         }
 
         .kandidat-list {
@@ -294,7 +295,34 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
     <div class="container">
         <!-- Kandidat dan form tetap -->
         <div class="title">
-            <h1>Selamat Datang di Forum Pemilihan Osis Skalsa</h1>
+            <div class="header-wrap">
+                <h1>Selamat Datang di Forum Pemilihan Osis Skalsa</h1>
+                <div class="btn-login">
+                    <button class="user-login" name="login" onclick="window.location.href='../admin/auth/login.php'">hanya admin</button>
+                    <style>
+                        .btn-login button {
+                            background: none;
+                            border: none;
+                            border: 2px solid #2ecc71;
+                            height: 40px;
+                            width: 120px;
+                            border-radius: 7px;
+                            font-size: 18px;
+                            font-weight: 400;
+                            cursor: pointer;
+                        }
+
+                        .btn-login button:hover {
+                            transition: .9s;
+                        }
+                    </style>
+                </div>
+                <style>
+                    .header-wrap {
+                        display: flex;
+                    }
+                </style>
+            </div>
             <div class="logo">
                 <img src="assets/img/logo osis.png">
                 <img src="assets/img/logo sekolah.png">
