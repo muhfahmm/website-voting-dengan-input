@@ -214,7 +214,7 @@ $totalVotes = $totalRow['total'];
                 datasets: [{
                     label: 'Jumlah Suara',
                     data: dataVotes,
-                    backgroundColor: '#3498db'
+                    backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6']
                 }]
             },
             options: {
