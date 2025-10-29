@@ -4,18 +4,35 @@ require '../../db/db.php';
 
 if (isset($_POST['edit'])) {
     $id = $_POST['id'];
-    $nomor_kandidat = $_POST['nomor_kandidat'];
+    $nomor_kandidat = (int)$_POST['nomor_kandidat'];
     $nama_ketua = $_POST['nama_ketua'];
     $nama_wakil = $_POST['nama_wakil'];
 
-    // ambil data lama untuk hapus foto kalau diganti
+    $check_duplicate = mysqli_prepare($db, "SELECT id FROM tb_kandidat WHERE nomor_kandidat = ? AND id != ?");
+    mysqli_stmt_bind_param($check_duplicate, "ii", $nomor_kandidat, $id);
+    mysqli_stmt_execute($check_duplicate);
+    mysqli_stmt_store_result($check_duplicate);
+
+    if (mysqli_stmt_num_rows($check_duplicate) > 0) {
+        mysqli_stmt_close($check_duplicate);
+        
+        $message = "Gagal update kandidat: Nomor Kandidat " . $nomor_kandidat . " sudah digunakan oleh kandidat lain.";
+        
+        echo "<script>
+            alert('" . $message . "');
+            window.location.href = '../pages/../kandidat/daftar.php'; 
+        </script>";
+        
+        exit;
+    }
+    
+    mysqli_stmt_close($check_duplicate);
     $queryOld = mysqli_query($db, "SELECT * FROM tb_kandidat WHERE id='$id'");
     $old = mysqli_fetch_assoc($queryOld);
 
     $foto_ketua = $old['foto_ketua'];
     $foto_wakil = $old['foto_wakil'];
 
-    // jika upload foto ketua baru
     if (!empty($_FILES['foto_ketua']['name'])) {
         $fileName = time() . "_ketua_" . $_FILES['foto_ketua']['name'];
         $target = "../uploads/" . $fileName;
@@ -55,3 +72,4 @@ if (isset($_POST['edit'])) {
         echo "Gagal update kandidat: " . mysqli_error($db);
     }
 }
+?>
