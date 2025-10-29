@@ -4,6 +4,7 @@ require '../../db/db.php';
 
 if (isset($_POST['edit'])) {
     $id = $_POST['id'];
+    $nomor_kandidat = $_POST['nomor_kandidat'];
     $nama_ketua = $_POST['nama_ketua'];
     $nama_wakil = $_POST['nama_wakil'];
 
@@ -39,7 +40,8 @@ if (isset($_POST['edit'])) {
     }
 
     // update ke database
-    $update = mysqli_query($db, "UPDATE tb_kandidat SET 
+    $update = mysqli_query($db, "UPDATE tb_kandidat SET
+        nomor_kandidat='$nomor_kandidat',
         nama_ketua='$nama_ketua',
         nama_wakil='$nama_wakil',
         foto_ketua='$foto_ketua',

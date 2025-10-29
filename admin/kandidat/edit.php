@@ -167,6 +167,9 @@ if (!$data) {
             <form action="../api/proses-edit.php" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="id" value="<?= $data['id']; ?>">
 
+                <label for="nomor_kandidat">Nomor Urut</label>
+                <input type="text" id="nomor_kandidat" name="nomor_kandidat" value="<?= $data['nomor_kandidat']; ?>" required>
+
                 <label for="nama_ketua">Nama Ketua</label>
                 <input type="text" id="nama_ketua" name="nama_ketua" value="<?= $data['nama_ketua']; ?>" required>
 
