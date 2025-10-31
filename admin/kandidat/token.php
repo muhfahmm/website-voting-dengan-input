@@ -14,7 +14,8 @@ $admin = $_SESSION['username'];
  * Contoh: "X-1" -> "x1" (prefix part is letters only, we keep letter part as prefix)
  * But we will use prefix only for grouping, numeric part akan di-handle terpisah.
  */
-function kelasToPrefix($kelas) {
+function kelasToPrefix($kelas)
+{
     // ambil bagian huruf dari kelas (misal X-1 -> x, XI-2 -> xi, XII-RPL -> xii)
     $letters = preg_replace('/[^a-zA-Z]/', '', $kelas);
     $prefix = strtolower($letters);
@@ -30,7 +31,8 @@ function kelasToPrefix($kelas) {
  * token format: <prefix><classNum><3-digit-urut>
  * contoh: x1001, x1002, xi3001, xii4001
  */
-function generateTokenByPrefixAndNumber($prefix, $classNum, $db) {
+function generateTokenByPrefixAndNumber($prefix, $classNum, $db)
+{
     // hitung jumlah token yang sudah ada untuk kombinasi prefix+classNum
     $like = mysqli_real_escape_string($db, $prefix . $classNum . '%');
     $q = mysqli_query($db, "SELECT COUNT(*) AS jumlah FROM tb_buat_token WHERE token LIKE '{$like}'");
@@ -243,103 +245,185 @@ $tokens = mysqli_query($db, "SELECT * FROM tb_buat_token ORDER BY created_at DES
 
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Manajemen Token - Voting OSIS</title>
     <style>
-        body {font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:0;}
-        .container {width:90%; max-width:1000px; margin:30px auto; background:#fff; border-radius:8px; box-shadow:0 3px 10px rgba(0,0,0,0.1); padding:20px;}
-        h1 {text-align:center; color:#2c3e50; margin-bottom:12px;}
-        form {margin-bottom:18px; text-align:center;}
-        input[type=text], select, button {padding:8px 12px; font-size:14px; border-radius:5px; border:1px solid #ccc;}
-        button {background:#3498db; color:#fff; border:none; cursor:pointer; margin-left:8px; padding:8px 12px;}
-        button:hover {background:#2980b9;}
-        .message {text-align:center; margin:10px 0; color:#2c3e50;}
-        table {width:100%; border-collapse:collapse; margin-bottom:18px;}
-        th, td {border:1px solid #ddd; padding:8px; text-align:center;}
-        th {background:#2c3e50; color:#fff;}
-        tr:nth-child(even){background:#f9f9f9;}
-        a.btn-delete {color:#e74c3c; text-decoration:none; font-weight:bold;}
-        a.btn-delete:hover {text-decoration:underline;}
-        .small {font-size:13px;color:#666;}
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 30px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 12px;
+        }
+
+        form {
+            margin-bottom: 18px;
+            text-align: center;
+        }
+
+        input[type=text],
+        select,
+        button {
+            padding: 8px 12px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            margin-left: 8px;
+            padding: 8px 12px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .message {
+            text-align: center;
+            margin: 10px 0;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        th {
+            background: #2c3e50;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        a.btn-delete {
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a.btn-delete:hover {
+            text-decoration: underline;
+        }
+
+        .small {
+            font-size: 13px;
+            color: #666;
+        }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <h1>Manajemen Token Voting</h1>
+    <div class="container">
+        <h1>Manajemen Token Voting</h1>
 
-    <?php if (!empty($message)): ?>
-        <div class="message"><?= $message; ?></div>
-    <?php endif; ?>
-
-    <!-- Form tambah kelas -->
-    <form method="POST" style="margin-bottom: 12px;">
-        <input type="text" name="kelas" placeholder="Masukkan nama kelas baru (mis: X-1, X-2, XI-RPL)" required>
-        <button type="submit" name="add_class">Tambah Kelas</button>
-    </form>
-
-    <!-- Daftar kelas -->
-    <h3>Daftar Kelas</h3>
-    <table style="margin-bottom:16px;">
-        <tr>
-            <th>No</th>
-            <th>Nama Kelas</th>
-            <th>No. Kelas (dipakai token)</th>
-            <th>Aksi</th>
-        </tr>
-        <?php
-        $no = 1;
-        // tampilkan berdasarkan query yang diambil ulang
-        if (mysqli_num_rows($kelasQuery) > 0):
-            mysqli_data_seek($kelasQuery, 0);
-            while ($k = mysqli_fetch_assoc($kelasQuery)):
-                $classNumDisplay = isset($classNumberMap[$k['id']]) ? $classNumberMap[$k['id']] : '-';
-        ?>
-                <tr>
-                    <td><?= $no++; ?></td>
-                    <td><?= htmlspecialchars($k['nama_kelas']); ?></td>
-                    <td class="small"><?= $classNumDisplay; ?></td>
-                    <td>
-                        <form method="POST" style="display:inline;">
-                            <input type="hidden" name="kelas_id" value="<?= $k['id']; ?>">
-                            <button type="submit" name="generate">Buat Token</button>
-                        </form>
-                        <a href="?hapus=<?= $k['id']; ?>" class="btn-delete" onclick="return confirm('Yakin ingin menghapus kelas ini dan semua token terkait?')">Hapus</a>
-                    </td>
-                </tr>
-        <?php endwhile; else: ?>
-            <tr><td colspan="4" style="text-align:center;">Belum ada kelas ditambahkan.</td></tr>
+        <?php if (!empty($message)): ?>
+            <div class="message"><?= $message; ?></div>
         <?php endif; ?>
-    </table>
 
-    <!-- Daftar token -->
-    <h3>Daftar Token yang Sudah Dibuat</h3>
-    <table>
-        <tr>
-            <th>No</th>
-            <th>Token</th>
-            <th>Dibuat Oleh</th>
-            <th>Tanggal Dibuat</th>
-            <th>Aksi</th>
-        </tr>
-        <?php
-        $no = 1;
-        if (mysqli_num_rows($tokens) > 0):
-            while ($row = mysqli_fetch_assoc($tokens)):
-        ?>
+        <!-- Form tambah kelas -->
+        <form method="POST" style="margin-bottom: 12px;">
+            <input type="text" name="kelas" placeholder="Masukkan nama kelas baru (mis: X-1, X-2, XI-RPL)" required>
+            <button type="submit" name="add_class">Tambah Kelas</button>
+        </form>
+
+        <!-- Daftar kelas -->
+        <h3>Daftar Kelas</h3>
+        <table style="margin-bottom:16px;">
+            <tr>
+                <th>No</th>
+                <th>Nama Kelas</th>
+                <th>No. Kelas (dipakai token)</th>
+                <th>Aksi</th>
+            </tr>
+            <?php
+            $no = 1;
+            // tampilkan berdasarkan query yang diambil ulang
+            if (mysqli_num_rows($kelasQuery) > 0):
+                mysqli_data_seek($kelasQuery, 0);
+                while ($k = mysqli_fetch_assoc($kelasQuery)):
+                    $classNumDisplay = isset($classNumberMap[$k['id']]) ? $classNumberMap[$k['id']] : '-';
+            ?>
+                    <tr>
+                        <td><?= $no++; ?></td>
+                        <td><?= htmlspecialchars($k['nama_kelas']); ?></td>
+                        <td class="small"><?= $classNumDisplay; ?></td>
+                        <td>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="kelas_id" value="<?= $k['id']; ?>">
+                                <button type="submit" name="generate">Buat Token</button>
+                            </form>
+                            <a href="?hapus=<?= $k['id']; ?>" class="btn-delete" onclick="return confirm('Yakin ingin menghapus kelas ini dan semua token terkait?')">Hapus</a>
+                        </td>
+                    </tr>
+                <?php endwhile;
+            else: ?>
                 <tr>
-                    <td><?= $no++; ?></td>
-                    <td><?= htmlspecialchars($row['token']); ?></td>
-                    <td><?= htmlspecialchars($row['created_by']); ?></td>
-                    <td><?= $row['created_at']; ?></td>
-                    <td>
-                        <a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete" onclick="return confirm('Hapus token ini?')">Hapus</a>
-                    </td>
+                    <td colspan="4" style="text-align:center;">Belum ada kelas ditambahkan.</td>
                 </tr>
-        <?php endwhile; else: ?>
-            <tr><td colspan="5" style="text-align:center;">Belum ada token yang dibuat.</td></tr>
-        <?php endif; ?>
-    </table>
-</div>
+            <?php endif; ?>
+        </table>
+
+        <!-- Daftar token -->
+        <h3>Daftar Token yang Sudah Dibuat</h3>
+        <table>
+            <tr>
+                <th>No</th>
+                <th>Token</th>
+                <th>Aksi</th>
+            </tr>
+            <?php
+            $no = 1;
+            if (mysqli_num_rows($tokens) > 0):
+                while ($row = mysqli_fetch_assoc($tokens)):
+            ?>
+                    <tr>
+                        <td><?= $no++; ?></td>
+                        <td><?= htmlspecialchars($row['token']); ?></td>
+                        <td>
+                            <a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete" onclick="return confirm('Hapus token ini?')">Hapus</a>
+                        </td>
+                    </tr>
+                <?php endwhile;
+            else: ?>
+                <tr>
+                    <td colspan="5" style="text-align:center;">Belum ada token yang dibuat.</td>
+                </tr>
+            <?php endif; ?>
+        </table>
+    </div>
 </body>
+
 </html>

@@ -89,6 +89,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
 }
 
 $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat ASC");
+// Ambil semua kelas dari tb_kelas
+$query_kelas = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY nama_kelas ASC");
+$kelas_list = [];
+while ($k = mysqli_fetch_assoc($query_kelas)) {
+    $kelas_list[] = $k;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -406,13 +413,13 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
                     <br>
                     <select id="kelas" name="kelas" class="pilih-kelas">
                         <option value="">Pilih Kelas</option>
-                        <option value="X-1">X-1</option>
-                        <option value="X-2">X-2</option>
-                        <option value="XI-1">XI-1 TKJ</option>
-                        <option value="XI-2">XI-2 TKJ</option>
-                        <option value="XI-TJA">XI TJA</option>
-                        <option value="XII">XII TKJ</option>
+                        <?php foreach ($kelas_list as $kelas): ?>
+                            <option value="<?= htmlspecialchars($kelas['nama_kelas']) ?>">
+                                <?= htmlspecialchars($kelas['nama_kelas']) ?>
+                            </option>
+                        <?php endforeach; ?>
                     </select>
+
                 </div>
                 <input type="hidden" name="kandidat_terpilih" id="kandidat_terpilih">
                 <button type="submit" name="kirim">Kirim Vote</button>
