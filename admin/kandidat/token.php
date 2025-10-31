@@ -250,13 +250,57 @@ $tokens = mysqli_query($db, "
 ");
 
 ?>
-
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="UTF-8">
-    <title>Manajemen Token - Voting OSIS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin - Voting OSIS</title>
+    <link rel="stylesheet" href="../assets/css/index.css">
+    <link rel="stylesheet" href="../assets/css/global.css">
+    <!-- css sidebar -->
+    <style>
+        .sidebar {
+            width: 220px;
+            background: #2c3e50;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            padding: 8px 10px;
+            border-radius: 5px;
+            transition: 0.3s;
+        }
+
+        .sidebar ul li a:hover {
+            background: #34495e;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+        }
+    </style>
+
+<!-- css konten tabel -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -354,7 +398,21 @@ $tokens = mysqli_query($db, "
 </head>
 
 <body>
-    <div class="container">
+    <div class="sidebar">
+        <h2>Admin Panel</h2>
+        <ul>
+            <li><a href="../index.php">Dashboard</a></li>
+            <li><a href="../hasil-vote/result.php">Hasil</a></li>
+            <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
+            <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
+            <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
+            <li><a href="../kandidat/token.php">Kelas dan Token</a></li>
+            <li><a href="../kandidat/kode-guru.php">Buat Kode Guru</a></li>
+            <li><a href="../auth/logout.php">Logout</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
         <h1>Manajemen Token Voting</h1>
 
         <?php if (!empty($message)): ?>

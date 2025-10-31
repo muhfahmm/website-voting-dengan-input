@@ -161,6 +161,8 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat");
             <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
             <li><a href="../kandidat/daftar.php" class="active">Daftar Kandidat</a></li>
             <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
+                        <li><a href="kandidat/token.php">Kelas dan  Token</a></li>
+            <li><a href="kandidat/kode-guru.php">Buat Kode Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>

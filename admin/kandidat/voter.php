@@ -74,7 +74,7 @@ while ($row = mysqli_fetch_assoc($votedGuruQuery)) {
 // jumlah siswa setiap kelas
 $dataKelas = [
     "X-1" => 21,
-    "X-2" => 18 ,
+    "X-2" => 18,
     "XI-1" => 29,
     "XI-2" => 17,
     "XI-TJA" => 11,
@@ -278,6 +278,8 @@ while ($row = mysqli_fetch_assoc($q)) {
             <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="voter.php" class="active">Daftar Voter</a></li>
+            <li><a href="../kandidat/token.php">Kelas dan Token</a></li>
+            <li><a href="../kandidat/kode-guru.php">Buat Kode Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
@@ -387,12 +389,12 @@ while ($row = mysqli_fetch_assoc($q)) {
             </div>
         <?php endif; ?>
         <?php
-$guruSummary = [
-    "total" => 0,
-    "kandidat" => []
-];
+        $guruSummary = [
+            "total" => 0,
+            "kandidat" => []
+        ];
 
-$qGuru = mysqli_query($db, "
+        $qGuru = mysqli_query($db, "
     SELECT l.nomor_kandidat, COUNT(*) as total_suara
     FROM tb_vote_log l
     JOIN tb_voter v ON l.voter_id = v.id
@@ -400,41 +402,41 @@ $qGuru = mysqli_query($db, "
     GROUP BY l.nomor_kandidat
 ");
 
-while ($row = mysqli_fetch_assoc($qGuru)) {
-    $nomor = $row['nomor_kandidat'];
-    $jumlah = $row['total_suara'];
+        while ($row = mysqli_fetch_assoc($qGuru)) {
+            $nomor = $row['nomor_kandidat'];
+            $jumlah = $row['total_suara'];
 
-    $guruSummary["kandidat"][$nomor] = $jumlah;
-    $guruSummary["total"] += $jumlah;
-}
-?>
-<?php
-// total guru yang terdaftar (target)
-$totalGuruTarget = 25;
+            $guruSummary["kandidat"][$nomor] = $jumlah;
+            $guruSummary["total"] += $jumlah;
+        }
+        ?>
+        <?php
+        // total guru yang terdaftar (target)
+        $totalGuruTarget = 25;
 
-// hitung berapa guru sudah voting
-$qGuruVoted = mysqli_query($db, "
+        // hitung berapa guru sudah voting
+        $qGuruVoted = mysqli_query($db, "
     SELECT COUNT(DISTINCT v.id) AS voted
     FROM tb_voter v
     JOIN tb_vote_log l ON v.id = l.voter_id
     WHERE v.role = 'guru'
 ");
-$rowGuruVoted = mysqli_fetch_assoc($qGuruVoted);
-$votedGuru = isset($rowGuruVoted['voted']) ? (int)$rowGuruVoted['voted'] : 0;
+        $rowGuruVoted = mysqli_fetch_assoc($qGuruVoted);
+        $votedGuru = isset($rowGuruVoted['voted']) ? (int)$rowGuruVoted['voted'] : 0;
 
-// hitung persentase
-$percentGuru = $totalGuruTarget > 0 ? round(($votedGuru / $totalGuruTarget) * 100, 2) : 0;
-?>
+        // hitung persentase
+        $percentGuru = $totalGuruTarget > 0 ? round(($votedGuru / $totalGuruTarget) * 100, 2) : 0;
+        ?>
 
         <!-- Ringkasan Voting Guru -->
-<h3>Ringkasan Voting Guru</h3>
-<div class="kelas-grid">
-    <div class="kelas-card">
-        <h4>Guru</h4>
-        <p><?= $votedGuru ?> dari <?= $totalGuruTarget ?> guru (<?= $percentGuru ?>%)</p>
-        <div class="progress">
-            <div class="progress-fill" style="width: <?= $percentGuru ?>%;"></div>
-        </div>
+        <h3>Ringkasan Voting Guru</h3>
+        <div class="kelas-grid">
+            <div class="kelas-card">
+                <h4>Guru</h4>
+                <p><?= $votedGuru ?> dari <?= $totalGuruTarget ?> guru (<?= $percentGuru ?>%)</p>
+                <div class="progress">
+                    <div class="progress-fill" style="width: <?= $percentGuru ?>%;"></div>
+                </div>
 
 
                 <div class="kandidat-list">
