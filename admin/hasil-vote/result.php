@@ -40,10 +40,29 @@ while ($row = mysqli_fetch_assoc($query)) {
 // Reset pointer untuk diagram bar custom
 mysqli_data_seek($query, 0);
 
-// Hitung total semua suara
-$totalQuery = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_vote_log");
-$totalRow = mysqli_fetch_assoc($totalQuery);
-$totalVotes = $totalRow['total'];
+// Hitung total siswa & guru yang sudah voting
+$totalVotesSiswaQuery = mysqli_query($db, "
+    SELECT COUNT(DISTINCT v.id) AS total 
+    FROM tb_voter v
+    JOIN tb_vote_log l ON v.id = l.voter_id
+    WHERE v.role = 'siswa'
+");
+$totalVotesSiswaRow = mysqli_fetch_assoc($totalVotesSiswaQuery);
+$totalVotesSiswa = isset($totalVotesSiswaRow['total']) ? (int)$totalVotesSiswaRow['total'] : 0;
+
+$totalVotesGuruQuery = mysqli_query($db, "
+    SELECT COUNT(DISTINCT v.id) AS total 
+    FROM tb_voter v
+    JOIN tb_vote_log l ON v.id = l.voter_id
+    WHERE v.role = 'guru'
+");
+$totalVotesGuruRow = mysqli_fetch_assoc($totalVotesGuruQuery);
+$totalVotesGuru = isset($totalVotesGuruRow['total']) ? (int)$totalVotesGuruRow['total'] : 0;
+
+$totalSiswaTarget = array_sum($dataKelas); // total dari semua kelas siswa
+$totalGuruTarget = 25; // total guru tetap
+
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -166,7 +185,14 @@ $totalVotes = $totalRow['total'];
 
     <div class="main-content">
         <h2 style="margin-bottom: 20px; text-align:center;">Hasil Sementara</h2>
-        <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px;"> Total Siswa: <?= $total_siswa; ?> | Sudah Voting: <?= $totalVotes; ?> | Belum Voting: <?= $total_siswa - $totalVotes; ?> </div>
+        <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px; margin-bottom:10px;">
+            Total Siswa: <?= $totalSiswaTarget; ?> | Sudah Voting: <?= $totalVotesSiswa; ?> | Belum Voting: <?= $totalSiswaTarget - $totalVotesSiswa; ?>
+        </div>
+
+        <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px;">
+            Total Guru: <?= $totalGuruTarget; ?> | Sudah Voting: <?= $totalVotesGuru; ?> | Belum Voting: <?= $totalGuruTarget - $totalVotesGuru; ?>
+        </div>
+
 
         <div class="chart-container">
             <canvas id="pieChart"></canvas>

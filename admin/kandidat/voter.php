@@ -387,33 +387,55 @@ while ($row = mysqli_fetch_assoc($q)) {
             </div>
         <?php endif; ?>
         <?php
-        $guruSummary = [
-            "total" => 0,
-            "kandidat" => []
-        ];
+$guruSummary = [
+    "total" => 0,
+    "kandidat" => []
+];
 
-        $qGuru = mysqli_query($db, "
-            SELECT l.nomor_kandidat, COUNT(*) as total_suara
-            FROM tb_vote_log l
-            JOIN tb_voter v ON l.voter_id = v.id
-            WHERE v.role = 'guru'
-            GROUP BY l.nomor_kandidat
-        ");
+$qGuru = mysqli_query($db, "
+    SELECT l.nomor_kandidat, COUNT(*) as total_suara
+    FROM tb_vote_log l
+    JOIN tb_voter v ON l.voter_id = v.id
+    WHERE v.role = 'guru'
+    GROUP BY l.nomor_kandidat
+");
 
-        while ($row = mysqli_fetch_assoc($qGuru)) {
-            $nomor = $row['nomor_kandidat'];
-            $jumlah = $row['total_suara'];
+while ($row = mysqli_fetch_assoc($qGuru)) {
+    $nomor = $row['nomor_kandidat'];
+    $jumlah = $row['total_suara'];
 
-            $guruSummary["kandidat"][$nomor] = $jumlah;
-            $guruSummary["total"] += $jumlah;
-        }
-        ?>
+    $guruSummary["kandidat"][$nomor] = $jumlah;
+    $guruSummary["total"] += $jumlah;
+}
+?>
+<?php
+// total guru yang terdaftar (target)
+$totalGuruTarget = 25;
+
+// hitung berapa guru sudah voting
+$qGuruVoted = mysqli_query($db, "
+    SELECT COUNT(DISTINCT v.id) AS voted
+    FROM tb_voter v
+    JOIN tb_vote_log l ON v.id = l.voter_id
+    WHERE v.role = 'guru'
+");
+$rowGuruVoted = mysqli_fetch_assoc($qGuruVoted);
+$votedGuru = isset($rowGuruVoted['voted']) ? (int)$rowGuruVoted['voted'] : 0;
+
+// hitung persentase
+$percentGuru = $totalGuruTarget > 0 ? round(($votedGuru / $totalGuruTarget) * 100, 2) : 0;
+?>
+
         <!-- Ringkasan Voting Guru -->
-        <h3>Ringkasan Voting Guru</h3>
-        <div class="kelas-grid">
-            <div class="kelas-card">
-                <h4>Guru</h4>
-                <p>Total Suara: <?= $guruSummary["total"] ?> orang</p>
+<h3>Ringkasan Voting Guru</h3>
+<div class="kelas-grid">
+    <div class="kelas-card">
+        <h4>Guru</h4>
+        <p><?= $votedGuru ?> dari <?= $totalGuruTarget ?> guru (<?= $percentGuru ?>%)</p>
+        <div class="progress">
+            <div class="progress-fill" style="width: <?= $percentGuru ?>%;"></div>
+        </div>
+
 
                 <div class="kandidat-list">
                     <?php if (!empty($guruSummary["kandidat"])): ?>
