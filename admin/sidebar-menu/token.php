@@ -400,7 +400,7 @@ $tokens = mysqli_query($db, "
         }
     </style>
 
-<!-- css konten tabel -->
+    <!-- css konten tabel -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -504,16 +504,15 @@ $tokens = mysqli_query($db, "
             <li><a href="../index.php">Dashboard</a></li>
             <li><a href="../hasil-vote/result.php">Hasil</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
-            <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
-            <li><a href="../kandidat/token.php" class="active">Kelas dan Token</a></li>
-            <li><a href="../kandidat/kode-guru.php">Buat Kode Guru</a></li>
+            <li><a href="../sidebar-menu/voter.php">Daftar Voter</a></li>
+            <li><a href="../sidebar-menu/token.php" class="active">Kelas dan Token</a></li>
+            <li><a href="../sidebar-menu/kode-guru.php">Buat Kode Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
 
     <div class="main-content">
         <h1>Manajemen Token Voting</h1>
-
         <?php if (!empty($message)): ?>
             <div class="message"><?= $message; ?></div>
         <?php endif; ?>
