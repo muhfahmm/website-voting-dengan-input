@@ -58,6 +58,11 @@ $totalVotesGuruQuery = mysqli_query($db, "
 ");
 $totalVotesGuruRow = mysqli_fetch_assoc($totalVotesGuruQuery);
 $totalVotesGuru = isset($totalVotesGuruRow['total']) ? (int)$totalVotesGuruRow['total'] : 0;
+// Hitung total semua suara
+$totalQuery = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_vote_log");
+$totalRow = mysqli_fetch_assoc($totalQuery);
+$totalVotes = $totalRow['total'];
+
 
 $totalSiswaTarget = array_sum($dataKelas); // total dari semua kelas siswa
 $totalGuruTarget = 25; // total guru tetap
