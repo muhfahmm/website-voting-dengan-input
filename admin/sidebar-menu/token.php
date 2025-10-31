@@ -9,7 +9,6 @@ if (!isset($_SESSION['login'])) {
 
 $admin = $_SESSION['username'];
 
-// Fungsi bantu
 function kelasToPrefix($kelas)
 {
     $letters = preg_replace('/[^a-zA-Z]/', '', $kelas);
@@ -26,11 +25,27 @@ function generateTokenByPrefixAndNumber($prefix, $classNum, $db)
 
     return $prefix . $classNum . str_pad($jumlah, 3, '0', STR_PAD_LEFT);
 }
+// jumlah data per halaman
+$limit = 10;
 
-// Ambil semua kelas
+// halaman untuk kelas
+$pageKelas = isset($_GET['page_kelas']) ? (int)$_GET['page_kelas'] : 1;
+if ($pageKelas < 1) $pageKelas = 1;
+$offsetKelas = ($pageKelas - 1) * $limit;
+
+// halaman untuk token
+$pageToken = isset($_GET['page_token']) ? (int)$_GET['page_token'] : 1;
+if ($pageToken < 1) $pageToken = 1;
+$offsetToken = ($pageToken - 1) * $limit;
+
+$totalKelasResult = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_kelas");
+$totalKelas = mysqli_fetch_assoc($totalKelasResult)['total'] ?? 0;
+$totalPagesKelas = max(1, ceil($totalKelas / $limit));
+
+$kelasQuery = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY id ASC LIMIT $limit OFFSET $offsetKelas");
+
 $kelasList = [];
-$kelasResult = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY id ASC");
-while ($r = mysqli_fetch_assoc($kelasResult)) {
+while ($r = mysqli_fetch_assoc($kelasQuery)) {
     $kelasList[] = $r;
 }
 
@@ -52,9 +67,6 @@ foreach ($kelasList as $k) {
 
 $message = '';
 
-/* ======================
-   TAMBAH KELAS BARU
-   ====================== */
 if (isset($_POST['add_class'])) {
     $kelas_input = trim($_POST['kelas']);
     $jumlah_siswa = (int)$_POST['jumlah_siswa'];
@@ -75,9 +87,6 @@ if (isset($_POST['add_class'])) {
     }
 }
 
-/* ======================
-   HAPUS KELAS + TOKEN
-   ====================== */
 if (isset($_GET['hapus'])) {
     $id = (int)$_GET['hapus'];
     $q = mysqli_query($db, "SELECT nama_kelas FROM tb_kelas WHERE id=$id");
@@ -86,36 +95,10 @@ if (isset($_GET['hapus'])) {
 
     if ($kelas) {
         $prefix = kelasToPrefix($kelas);
-
-        if (preg_match('/(\d+)/', $kelas, $m)) {
-            $classNum = (int)$m[1];
-        } else {
-            $pref = mysqli_real_escape_string($db, $prefix);
-            $listQ = mysqli_query($db, "SELECT id, nama_kelas FROM tb_kelas ORDER BY id ASC");
-            $counter = 0;
-            $found = null;
-            while ($row = mysqli_fetch_assoc($listQ)) {
-                $p = kelasToPrefix($row['nama_kelas']);
-                if ($p === $prefix) {
-                    $counter++;
-                    if ((int)$row['id'] === $id) {
-                        $found = $counter;
-                        break;
-                    }
-                }
-            }
-            $classNum = $found ? $found : 0;
-        }
-
         mysqli_query($db, "DELETE FROM tb_kelas WHERE id=$id");
 
-        if ($classNum > 0) {
-            $like = mysqli_real_escape_string($db, $prefix . $classNum . '%');
-            mysqli_query($db, "DELETE FROM tb_buat_token WHERE token LIKE '{$like}'");
-        } else {
-            $like = mysqli_real_escape_string($db, $prefix . '%');
-            mysqli_query($db, "DELETE FROM tb_buat_token WHERE token LIKE '{$like}'");
-        }
+        $like = mysqli_real_escape_string($db, $prefix . '%');
+        mysqli_query($db, "DELETE FROM tb_buat_token WHERE token LIKE '{$like}'");
 
         $message = "🗑️ Kelas '$kelas' dan token terkait berhasil dihapus.";
         header("Location: " . preg_replace('/(\?.*)?$/', '', $_SERVER['REQUEST_URI']));
@@ -123,9 +106,6 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-/* ======================
-   HAPUS TOKEN
-   ====================== */
 if (isset($_GET['hapus_token'])) {
     $id_token = (int)$_GET['hapus_token'];
     $check = mysqli_query($db, "SELECT token FROM tb_buat_token WHERE id = $id_token");
@@ -137,38 +117,35 @@ if (isset($_GET['hapus_token'])) {
     }
 }
 
-/* ======================
-   GENERATE TOKEN
-   ====================== */
 if (isset($_POST['generate'])) {
     $kelas_id = (int)$_POST['kelas_id'];
     $q = mysqli_query($db, "SELECT nama_kelas FROM tb_kelas WHERE id = $kelas_id LIMIT 1");
     $r = mysqli_fetch_assoc($q);
-    if (!$r) {
-        $message = "⚠️ Kelas tidak ditemukan.";
-    } else {
+    if ($r) {
         $kelas_nama = $r['nama_kelas'];
         $prefix = kelasToPrefix($kelas_nama);
         $classNum = $classNumberMap[$kelas_id] ?? 0;
-        if ($classNum <= 0) {
-            $message = "❌ Gagal menentukan nomor kelas.";
-        } else {
-            $token = generateTokenByPrefixAndNumber($prefix, $classNum, $db);
-            $token_esc = mysqli_real_escape_string($db, $token);
-            $insert = mysqli_query($db, "INSERT INTO tb_buat_token (token, kelas_id, created_by) VALUES ('$token_esc', $kelas_id, '$admin')");
-            $message = $insert ? "✅ Token dibuat untuk <b>$kelas_nama</b>: <b>$token</b>" : "❌ Gagal membuat token.";
-            header("Location: " . preg_replace('/(\?.*)?$/', '', $_SERVER['REQUEST_URI']));
-            exit;
-        }
+        $token = generateTokenByPrefixAndNumber($prefix, $classNum, $db);
+        $token_esc = mysqli_real_escape_string($db, $token);
+        mysqli_query($db, "INSERT INTO tb_buat_token (token, kelas_id, created_by) VALUES ('$token_esc', $kelas_id, '$admin')");
+        $message = "✅ Token dibuat untuk <b>$kelas_nama</b>: <b>$token</b>";
+        header("Location: " . preg_replace('/(\?.*)?$/', '', $_SERVER['REQUEST_URI']));
+        exit;
+    } else {
+        $message = "⚠️ Kelas tidak ditemukan.";
     }
 }
 
-$kelasQuery = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY id ASC");
+$totalTokenResult = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_buat_token");
+$totalToken = mysqli_fetch_assoc($totalTokenResult)['total'] ?? 0;
+$totalPagesToken = max(1, ceil($totalToken / $limit));
+
 $tokens = mysqli_query($db, "
     SELECT t.*, k.nama_kelas 
     FROM tb_buat_token t
     LEFT JOIN tb_kelas k ON t.kelas_id = k.id
     ORDER BY t.created_at DESC
+    LIMIT $limit OFFSET $offsetToken
 ");
 ?>
 <!DOCTYPE html>
@@ -189,7 +166,6 @@ $tokens = mysqli_query($db, "
             display: flex;
             min-height: 100vh;
             background: #f4f6f9;
-            font-family: Arial, sans-serif;
         }
 
         .sidebar {
@@ -235,8 +211,6 @@ $tokens = mysqli_query($db, "
             color: #2c3e50;
         }
 
-
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -246,7 +220,7 @@ $tokens = mysqli_query($db, "
         th,
         td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: center;
         }
 
@@ -255,14 +229,66 @@ $tokens = mysqli_query($db, "
             color: #fff;
         }
 
-        a.btn-delete {
-            color: #e74c3c;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 42px;
+            min-width: 120px;
+            padding: 0 14px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
             text-decoration: none;
+            transition: all .25s ease;
+        }
+
+        .btn-blue {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-blue:hover {
+            background: linear-gradient(135deg, #2980b9, #1f5f8a);
+        }
+
+        .btn-border-red {
+            background: #fff;
+            color: #e74c3c;
+            border: 2px solid #e74c3c;
+        }
+
+        .btn-border-red:hover {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .pagination {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 3px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a.active {
+            background: #3498db;
+            color: #fff;
             font-weight: bold;
         }
 
-        a.btn-delete:hover {
-            text-decoration: underline;
+        .pagination a:hover {
+            background: #2980b9;
+            color: #fff;
         }
     </style>
 </head>
@@ -275,8 +301,8 @@ $tokens = mysqli_query($db, "
             <li><a href="../hasil-vote/result.php">Hasil</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="../sidebar-menu/voter.php">Daftar Voter</a></li>
-            <li><a href="../sidebar-menu/token.php" class="active">Kelas dan Token</a></li>
-            <li><a href="../sidebar-menu/kode-guru.php">Buat Kode Guru</a></li>
+            <li><a href="../sidebar-menu/token.php" class="active">Kelas & Token Siswa</a></li>
+            <li><a href="../sidebar-menu/kode-guru.php">Token Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
@@ -290,65 +316,68 @@ $tokens = mysqli_query($db, "
 
         <!-- Tambah Kelas -->
         <form method="POST" class="form-modern">
-    <div class="form-group">
-        <input type="text" name="kelas" placeholder="Masukkan nama kelas (misal: X-1, XI-RPL)" required>
-        <input type="number" name="jumlah_siswa" placeholder="Jumlah siswa" min="1" required>
-        <button type="submit" name="add_class">
-            <span>Tambah</span>
-        </button>
-    </div>
+            <input type="text" name="kelas" placeholder="Masukkan nama kelas" required>
+            <input type="number" name="jumlah_siswa" placeholder="Jumlah siswa" min="1" required>
+            <button type="submit" name="add_class" class="btn btn-blue">Tambah</button>
+            <style>
+                .form-modern {
+                    margin: 40px auto;
+                    padding: 24px 28px;
+                    background: #ffffff;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                    font-family: "Poppins", sans-serif;
+                    transition: 0.3s ease;
+                }
 
-    <style>
-        .form-modern {
-            gap: 10px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-        }
+                .form-modern:hover {
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+                }
 
-        .form-modern input[type=text],
-        .form-modern input[type=number] {
-            padding: 10px 14px;
-            font-size: 15px;
-            border: 1.5px solid #ccc;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            min-width: 220px;
-            outline: none;
-        }
+                .form-modern input[type="text"],
+                .form-modern input[type="number"] {
+                    width: 100%;
+                    padding: 12px 14px;
+                    font-size: 15px;
+                    border: 1.5px solid #ccc;
+                    border-radius: 8px;
+                    outline: none;
+                    transition: all 0.2s ease;
+                }
 
-        .form-modern input[type=text]:focus,
-        .form-modern input[type=number]:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-        }
+                .form-modern input[type="text"]:focus,
+                .form-modern input[type="number"]:focus {
+                    border-color: #3498db;
+                    box-shadow: 0 0 4px rgba(52, 152, 219, 0.4);
+                }
 
-        .form-modern button {
-            gap: 5px;
-            padding: 10px 16px;
-            font-size: 15px;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            background: linear-gradient(135deg, #3498db, #2980b9);
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-        }
+                .form-modern input::placeholder {
+                    color: #999;
+                    font-style: italic;
+                }
 
-        .form-modern button:hover {
-            background: linear-gradient(135deg, #2980b9, #1f5f8a);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
-        }
+                .btn.btn-blue {
+                    background-color: #3498db;
+                    color: #fff;
+                    border: none;
+                    border-radius: 8px;
+                    padding: 12px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: background-color 0.3s ease, transform 0.2s;
+                }
 
-        .form-modern button:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
-        }
-    </style>
-</form>
+                .btn.btn-blue:hover {
+                    background-color: #2980b9;
+                    transform: scale(1.03);
+                }
+            </style>
 
+        </form>
 
         <!-- Daftar Kelas -->
         <h3>Daftar Kelas</h3>
@@ -359,10 +388,8 @@ $tokens = mysqli_query($db, "
                 <th>Jumlah Siswa</th>
                 <th>Aksi</th>
             </tr>
-            <?php
-            $no = 1;
-            if (mysqli_num_rows($kelasQuery) > 0):
-                while ($k = mysqli_fetch_assoc($kelasQuery)): ?>
+            <?php if ($totalKelas > 0): $no = $offsetKelas + 1;
+                foreach ($kelasList as $k): ?>
                     <tr>
                         <td><?= $no++; ?></td>
                         <td><?= htmlspecialchars($k['nama_kelas']); ?></td>
@@ -370,13 +397,13 @@ $tokens = mysqli_query($db, "
                         <td>
                             <form method="POST" style="display:inline;">
                                 <input type="hidden" name="kelas_id" value="<?= $k['id']; ?>">
-                                <button type="submit" name="generate">Buat Token</button>
+                                <button type="submit" name="generate" class="btn btn-blue">Buat Token</button>
                             </form>
-                            <a href="?hapus=<?= $k['id']; ?>" class="btn-delete"
-                                onclick="return confirm('Yakin ingin menghapus kelas ini dan semua token terkait?')">Hapus</a>
+                            <a href="?hapus=<?= $k['id']; ?>" class="btn btn-border-red"
+                                onclick="return confirm('Yakin ingin menghapus kelas ini?')">Hapus</a>
                         </td>
                     </tr>
-                <?php endwhile;
+                <?php endforeach;
             else: ?>
                 <tr>
                     <td colspan="4">Belum ada kelas.</td>
@@ -384,8 +411,15 @@ $tokens = mysqli_query($db, "
             <?php endif; ?>
         </table>
 
+        <!-- Pagination Kelas -->
+        <div class="pagination">
+            <?php for ($p = 1; $p <= $totalPagesKelas; $p++): ?>
+                <a href="?page_kelas=<?= $p ?>&page_token=<?= $pageToken ?>" class="<?= $p == $pageKelas ? 'active' : '' ?>"><?= $p ?></a>
+            <?php endfor; ?>
+        </div>
+
         <!-- Daftar Token -->
-        <h3>Daftar Token yang Sudah Dibuat</h3>
+        <h3>Daftar Token</h3>
         <table>
             <tr>
                 <th>No</th>
@@ -394,30 +428,29 @@ $tokens = mysqli_query($db, "
                 <th>Status</th>
                 <th>Aksi</th>
             </tr>
-            <?php
-            $no = 1;
-            if (mysqli_num_rows($tokens) > 0):
-                while ($row = mysqli_fetch_assoc($tokens)):
-                    $status = $row['status_token'] === 'sudah'
-                        ? '<span style="color:green;font-weight:bold;">Sudah Digunakan</span>'
-                        : '<span style="color:red;font-weight:bold;">Belum Digunakan</span>';
-                    $kelasNama = $row['nama_kelas'] ?? '<i>Tidak Diketahui</i>';
-            ?>
+            <?php if ($totalToken > 0): $no = $offsetToken + 1;
+                while ($row = mysqli_fetch_assoc($tokens)): ?>
                     <tr>
                         <td><?= $no++; ?></td>
-                        <td><?= htmlspecialchars($kelasNama); ?></td>
+                        <td><?= htmlspecialchars($row['nama_kelas'] ?? '-'); ?></td>
                         <td><?= htmlspecialchars($row['token']); ?></td>
-                        <td><?= $status; ?></td>
-                        <td><a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete"
-                                onclick="return confirm('Hapus token ini?')">Hapus</a></td>
+                        <td><?= $row['status_token'] === 'sudah' ? '<span style="color:green">Sudah</span>' : '<span style="color:red">Belum Dipakai</span>'; ?></td>
+                        <td><a href="?hapus_token=<?= $row['id']; ?>" class="btn btn-border-red" onclick="return confirm('Hapus token ini?')">Hapus</a></td>
                     </tr>
                 <?php endwhile;
             else: ?>
                 <tr>
-                    <td colspan="5">Belum ada token dibuat.</td>
+                    <td colspan="5">Belum ada token.</td>
                 </tr>
             <?php endif; ?>
         </table>
+
+        <!-- Pagination Token -->
+        <div class="pagination">
+            <?php for ($p = 1; $p <= $totalPagesToken; $p++): ?>
+                <a href="?page_token=<?= $p ?>&page_kelas=<?= $pageKelas ?>" class="<?= $p == $pageToken ? 'active' : '' ?>"><?= $p ?></a>
+            <?php endfor; ?>
+        </div>
     </div>
 </body>
 

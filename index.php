@@ -12,9 +12,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     $successMessage = "";
     $tokenUsedMessage = "";
     
-    // ID yang akan dimasukkan ke tb_voter.token_id (Untuk Siswa)
     $voter_token_id = null; 
-    // MODIFIKASI: ID yang akan dimasukkan ke tb_voter.kode_guru_id (Untuk Guru)
     $voter_kode_guru_id = null; 
 
     if ($token_pemilih === '' || $kandidat_terpilih <= 0) {
@@ -24,14 +22,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     } elseif ($role === 'siswa' && $kelas_pemilih === '') {
         $errorMessage = "Untuk siswa, kelas wajib diisi.";
     } else {
-        $token_db_id = null; // ID asli dari tb_buat_token/tb_kode_guru
+        $token_db_id = null;
         $nama_token = '';
         $token_table_name = '';
         $status_check = null;
 
-        // --- 1. CEK VALIDITAS TOKEN / KODE BERDASARKAN ROLE ---
         if ($role === 'siswa') {
-            // Cek di tabel tb_buat_token (untuk siswa)
             $token_check = mysqli_prepare($db, "
                 SELECT t.id, t.kelas_id, t.status_token, k.nama_kelas 
                 FROM tb_buat_token t
@@ -46,19 +42,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
 
             if ($token_db_id) {
                 $voter_token_id = $token_db_id; 
-                $voter_kode_guru_id = null; // Pastikan ini NULL untuk siswa
+                $voter_kode_guru_id = null;
                 $nama_token = $nama_kelas_token;
                 $token_table_name = 'tb_buat_token';
                 $status_check = $status_token;
 
-                // Token Siswa ditemukan → cek apakah kelas cocok
                 if (strcasecmp($kelas_pemilih, $nama_kelas_token) !== 0) {
                     $errorMessage = "Token tidak cocok dengan kelas yang dipilih!";
                 }
             }
 
         } elseif ($role === 'guru') {
-            // Cek di tabel tb_kode_guru (untuk guru)
             $kode_guru_check = mysqli_prepare($db, "
                 SELECT id, status_kode 
                 FROM tb_kode_guru 
@@ -71,11 +65,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
             mysqli_stmt_close($kode_guru_check);
             
             if ($token_db_id_guru) {
-                // MODIFIKASI: ID asli dari tb_kode_guru
                 $token_db_id = $token_db_id_guru;
-                // MODIFIKASI: ID yang akan dimasukkan ke tb_voter.kode_guru_id
                 $voter_kode_guru_id = $token_db_id_guru; 
-                $voter_token_id = null; // Pastikan ini NULL untuk guru
+                $voter_token_id = null;
                 $nama_token = 'Guru/Staf'; 
                 $token_table_name = 'tb_kode_guru';
                 $status_check = $status_kode;
@@ -86,7 +78,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
             $errorMessage = "Kode/Token tidak terdaftar.";
         } 
         
-        // Cek status setelah validasi kode/token
         if (empty($errorMessage) && $token_db_id) {
             
             $is_already_used = false;
@@ -98,13 +89,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
             if ($is_already_used) {
                 $tokenUsedMessage = "Kode/Token sudah digunakan.";
             } else {
-                // Token/Kode valid dan belum digunakan → proses voting
                 mysqli_begin_transaction($db);
                 try {
-                    // Masukkan ke tb_voter
                     $kelas_voter = ($role === 'siswa') ? $kelas_pemilih : $nama_token;
                     
-                    // MODIFIKASI: Query INSERT diperbarui untuk menyertakan kolom kode_guru_id
                     $sql_voter = "
                         INSERT INTO tb_voter 
                         (nama_voter, kelas, role, token_id, kode_guru_id, created_at) 
@@ -112,12 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                     ";
                     $voter = mysqli_prepare($db, $sql_voter);
 
-                    // Menentukan tipe binding parameter
                     if ($role === 'siswa') {
-                        // Siswa: token_id (int), kode_guru_id (NULL)
-                        // Karena kita tidak bisa bind "NULL", kita harus menggunakan prepared statement yang berbeda
-                        // ATAU menggunakan bind_param dengan 'i' dan menyetel kolom ke NULL secara manual
-                        // Cara yang lebih aman dan terstruktur adalah:
                         $voter_token_id_val = $voter_token_id;
                         $sql_voter_siswa = "
                             INSERT INTO tb_voter 
@@ -131,7 +114,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                         mysqli_stmt_close($voter_siswa);
 
                     } elseif ($role === 'guru') {
-                        // Guru: token_id (NULL), kode_guru_id (int)
                         $voter_kode_guru_id_val = $voter_kode_guru_id;
                         $sql_voter_guru = "
                             INSERT INTO tb_voter 
@@ -159,7 +141,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                     mysqli_stmt_execute($update);
                     mysqli_stmt_close($update);
 
-                    // Update status token/kode (Menggunakan ID asli: $token_db_id)
                     if ($token_table_name === 'tb_buat_token') {
                         // Update status token siswa
                         mysqli_query($db, "UPDATE tb_buat_token SET status_token = 'sudah' WHERE id = $token_db_id");
