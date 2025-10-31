@@ -261,6 +261,20 @@ $tokens = mysqli_query($db, "
     <link rel="stylesheet" href="../assets/css/global.css">
     <!-- css sidebar -->
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
         .sidebar {
             width: 220px;
             background: #2c3e50;
@@ -287,16 +301,102 @@ $tokens = mysqli_query($db, "
             display: block;
             padding: 8px 10px;
             border-radius: 5px;
-            transition: 0.3s;
         }
 
-        .sidebar ul li a:hover {
+        .sidebar ul li a:hover,
+        .sidebar ul li a.active {
             background: #34495e;
         }
 
         .main-content {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background: #2c3e50;
+            color: #fff;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 3px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a.active {
+            background: #3498db;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .pagination a:hover {
+            background: #2980b9;
+            color: #fff;
+        }
+
+        .kelas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kelas-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .progress {
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 6px 0 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            width: 0;
+            transition: width 0.8s ease-in-out;
+        }
+
+        .sub-fill {
+            background: #2ecc71;
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.8s ease-in-out;
         }
     </style>
 
@@ -403,10 +503,9 @@ $tokens = mysqli_query($db, "
         <ul>
             <li><a href="../index.php">Dashboard</a></li>
             <li><a href="../hasil-vote/result.php">Hasil</a></li>
-            <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
-            <li><a href="../kandidat/token.php">Kelas dan Token</a></li>
+            <li><a href="../kandidat/token.php" class="active">Kelas dan Token</a></li>
             <li><a href="../kandidat/kode-guru.php">Buat Kode Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
@@ -430,8 +529,7 @@ $tokens = mysqli_query($db, "
         <table style="margin-bottom:16px;">
             <tr>
                 <th>No</th>
-                <th>Nama Kelas</th>
-                <th>No. Kelas (dipakai token)</th>
+                <th>Kelas</th>
                 <th>Aksi</th>
             </tr>
             <?php
@@ -445,7 +543,6 @@ $tokens = mysqli_query($db, "
                     <tr>
                         <td><?= $no++; ?></td>
                         <td><?= htmlspecialchars($k['nama_kelas']); ?></td>
-                        <td class="small"><?= $classNumDisplay; ?></td>
                         <td>
                             <form method="POST" style="display:inline;">
                                 <input type="hidden" name="kelas_id" value="<?= $k['id']; ?>">

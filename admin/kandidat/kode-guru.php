@@ -261,6 +261,20 @@ $tokens = mysqli_query($db, "
     <link rel="stylesheet" href="../assets/css/global.css">
     <!-- css sidebar -->
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            background: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+
         .sidebar {
             width: 220px;
             background: #2c3e50;
@@ -287,20 +301,106 @@ $tokens = mysqli_query($db, "
             display: block;
             padding: 8px 10px;
             border-radius: 5px;
-            transition: 0.3s;
         }
 
-        .sidebar ul li a:hover {
+        .sidebar ul li a:hover,
+        .sidebar ul li a.active {
             background: #34495e;
         }
 
         .main-content {
             flex: 1;
-            padding: 20px;
+            padding: 30px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        table th,
+        table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        table th {
+            background: #2c3e50;
+            color: #fff;
+        }
+
+        .pagination {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 3px;
+            background: #ecf0f1;
+            color: #2c3e50;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .pagination a.active {
+            background: #3498db;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .pagination a:hover {
+            background: #2980b9;
+            color: #fff;
+        }
+
+        .kelas-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .kelas-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 15px 20px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .progress {
+            height: 8px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 6px 0 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            border-radius: 5px;
+            width: 0;
+            transition: width 0.8s ease-in-out;
+        }
+
+        .sub-fill {
+            background: #2ecc71;
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.8s ease-in-out;
         }
     </style>
 
-<!-- css konten tabel -->
+    <!-- css konten tabel -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -403,102 +503,15 @@ $tokens = mysqli_query($db, "
         <ul>
             <li><a href="../index.php">Dashboard</a></li>
             <li><a href="../hasil-vote/result.php">Hasil</a></li>
-            <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
             <li><a href="../kandidat/token.php">Kelas dan Token</a></li>
-            <li><a href="../kandidat/kode-guru.php">Buat Kode Guru</a></li>
+            <li><a href="../kandidat/kode-guru.php" class="active">Buat Kode Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
 
     <div class="main-content">
-        <h1>Manajemen Token Voting</h1>
-
-        <?php if (!empty($message)): ?>
-            <div class="message"><?= $message; ?></div>
-        <?php endif; ?>
-
-        <!-- Form tambah kelas -->
-        <form method="POST" style="margin-bottom: 12px;">
-            <input type="text" name="kelas" placeholder="Masukkan nama kelas baru (mis: X-1, X-2, XI-RPL)" required>
-            <button type="submit" name="add_class">Tambah Kelas</button>
-        </form>
-
-        <!-- Daftar kelas -->
-        <h3>Daftar Kelas</h3>
-        <table style="margin-bottom:16px;">
-            <tr>
-                <th>No</th>
-                <th>Nama Kelas</th>
-                <th>No. Kelas (dipakai token)</th>
-                <th>Aksi</th>
-            </tr>
-            <?php
-            $no = 1;
-            // tampilkan berdasarkan query yang diambil ulang
-            if (mysqli_num_rows($kelasQuery) > 0):
-                mysqli_data_seek($kelasQuery, 0);
-                while ($k = mysqli_fetch_assoc($kelasQuery)):
-                    $classNumDisplay = isset($classNumberMap[$k['id']]) ? $classNumberMap[$k['id']] : '-';
-            ?>
-                    <tr>
-                        <td><?= $no++; ?></td>
-                        <td><?= htmlspecialchars($k['nama_kelas']); ?></td>
-                        <td class="small"><?= $classNumDisplay; ?></td>
-                        <td>
-                            <form method="POST" style="display:inline;">
-                                <input type="hidden" name="kelas_id" value="<?= $k['id']; ?>">
-                                <button type="submit" name="generate">Buat Token</button>
-                            </form>
-                            <a href="?hapus=<?= $k['id']; ?>" class="btn-delete" onclick="return confirm('Yakin ingin menghapus kelas ini dan semua token terkait?')">Hapus</a>
-                        </td>
-                    </tr>
-                <?php endwhile;
-            else: ?>
-                <tr>
-                    <td colspan="4" style="text-align:center;">Belum ada kelas ditambahkan.</td>
-                </tr>
-            <?php endif; ?>
-        </table>
-
-        <!-- Daftar token -->
-        <h3>Daftar Token yang Sudah Dibuat</h3>
-        <table>
-            <tr>
-                <th>No</th>
-                <th>Kelas</th>
-                <th>Token</th>
-                <th>Status</th>
-                <th>Aksi</th>
-            </tr>
-            <?php
-            $no = 1;
-            if (mysqli_num_rows($tokens) > 0):
-                while ($row = mysqli_fetch_assoc($tokens)):
-                    $status = $row['status_token'] === 'sudah'
-                        ? '<span style="color:green;font-weight:bold;">Sudah Digunakan</span>'
-                        : '<span style="color:red;font-weight:bold;">Belum Digunakan</span>';
-                    $kelasNama = $row['nama_kelas'] ?? '<i>Tidak Diketahui</i>';
-            ?>
-                    <tr>
-                        <td><?= $no++; ?></td>
-                        <td><?= htmlspecialchars($kelasNama); ?></td>
-                        <td><?= htmlspecialchars($row['token']); ?></td>
-                        <td><?= $status; ?></td>
-                        <td>
-                            <a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete"
-                                onclick="return confirm('Hapus token ini?')">Hapus</a>
-                        </td>
-                    </tr>
-                <?php endwhile;
-            else: ?>
-                <tr>
-                    <td colspan="5" style="text-align:center;">Belum ada token yang dibuat.</td>
-                </tr>
-            <?php endif; ?>
-        </table>
-
 
     </div>
 </body>

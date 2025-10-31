@@ -181,7 +181,6 @@ $totalGuruTarget = 25; // total guru tetap
         <ul>
             <li><a href="../index.php">Dashboard</a></li>
             <li><a href="result.php" class="active">Hasil</a></li>
-            <li><a href="../kandidat/tambah.php">Tambah Kandidat</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="../kandidat/voter.php">Daftar Voter</a></li>
             <li><a href="../kandidat/token.php">Kelas dan Token</a></li>
