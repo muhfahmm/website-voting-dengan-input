@@ -159,18 +159,25 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-// Hapus token individu
+// Hapus token individu + voter terkait (otomatis lewat ON DELETE CASCADE)
 if (isset($_GET['hapus_token'])) {
     $id_token = (int)$_GET['hapus_token'];
-    $hapus = mysqli_query($db, "DELETE FROM tb_buat_token WHERE id=$id_token");
-    if ($hapus) {
-        $message = "🗑️ Token berhasil dihapus.";
-        header("Location: " . preg_replace('/(\?.*)?$/', '', $_SERVER['REQUEST_URI']));
-        exit;
+
+    // Cek apakah token ada dulu
+    $check = mysqli_query($db, "SELECT token FROM tb_buat_token WHERE id = $id_token");
+    if (mysqli_num_rows($check) > 0) {
+        $hapus = mysqli_query($db, "DELETE FROM tb_buat_token WHERE id = $id_token");
+
+        if ($hapus) {
+            $message = "🗑️ Token dan voter terkait berhasil dihapus secara otomatis.";
+        } else {
+            $message = "❌ Gagal menghapus token: " . mysqli_error($db);
+        }
     } else {
-        $message = "❌ Gagal menghapus token: " . mysqli_error($db);
+        $message = "⚠️ Token tidak ditemukan.";
     }
 }
+
 
 // Generate token berdasarkan kelas yang dipilih
 if (isset($_POST['generate'])) {

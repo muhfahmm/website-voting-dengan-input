@@ -20,46 +20,69 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
         $errorMessage = "Untuk siswa, kelas wajib diisi.";
     } else {
         // Tentukan kelas yang akan dicek di DB (kosong jika role guru)
- $kelas_db_check = ($role === 'siswa') ? $kelas_pemilih : '';
+        $kelas_db_check = ($role === 'siswa') ? $kelas_pemilih : '';
 
-     // cek apakah token sudah digunakan untuk KELAS INI
-     $check = mysqli_prepare($db, "SELECT id FROM tb_voter WHERE nama_voter = ? AND kelas = ?");
-     // ... (Baris 28)
-  mysqli_stmt_bind_param($check, "ss", $token_pemilih, $kelas_db_check);
-  mysqli_stmt_execute($check);
-  mysqli_stmt_store_result($check);
+        // --- CEK TOKEN SUDAH DIGUNAKAN ATAU BELUM ---
 
-  $token_exists = mysqli_stmt_num_rows($check) > 0; // ✨ PERBAIKAN: Definisikan $token_exists di sini
+        // Cek apakah token ada di tabel tb_buat_token
+        $token_check = mysqli_prepare($db, "SELECT token FROM tb_buat_token WHERE token = ?");
+        mysqli_stmt_bind_param($token_check, "s", $token_pemilih);
+        mysqli_stmt_execute($token_check);
+        mysqli_stmt_store_result($token_check);
+        $token_valid = mysqli_stmt_num_rows($token_check) > 0;
+        mysqli_stmt_close($token_check);
 
-  mysqli_stmt_close($check); // Jangan lupa tutup statement
+        if (!$token_valid) {
+            // Jika token tidak ditemukan di database tb_buat_token
+            $errorMessage = "Token tidak terdaftar.";
+        } else {
+            // Jika token valid, cek apakah sudah digunakan di tb_voter
+            $check_used = mysqli_prepare($db, "SELECT id FROM tb_voter WHERE nama_voter = ?");
+            mysqli_stmt_bind_param($check_used, "s", $token_pemilih);
+            mysqli_stmt_execute($check_used);
+            mysqli_stmt_store_result($check_used);
+            $token_exists = mysqli_stmt_num_rows($check_used) > 0;
+            mysqli_stmt_close($check_used);
 
-    if ($token_exists) { 
-      $tokenUsedMessage = "Token sudah digunakan.";
-    } else {
-            $kelas_db = ($role === 'siswa') ? $kelas_pemilih : '';
-            mysqli_begin_transaction($db);
-            try {
-                $voter = mysqli_prepare($db, "INSERT INTO tb_voter (nama_voter, kelas, role, created_at) VALUES (?, ?, ?, NOW())");
-                mysqli_stmt_bind_param($voter, "sss", $token_pemilih, $kelas_db, $role);
-                mysqli_stmt_execute($voter);
-                $voter_id = mysqli_insert_id($db);
-                mysqli_stmt_close($voter);
+            if ($token_exists) {
+                // Jika token sudah dipakai sebelumnya
+                $tokenUsedMessage = "Token sudah digunakan.";
+            } else {
+                // Token valid dan belum digunakan -> proses voting
+                $kelas_db = ($role === 'siswa') ? $kelas_pemilih : '';
+                mysqli_begin_transaction($db);
+                try {
+                    // ambil id token dari tb_buat_token
+                    $get_token_id = mysqli_prepare($db, "SELECT id FROM tb_buat_token WHERE token = ?");
+                    mysqli_stmt_bind_param($get_token_id, "s", $token_pemilih);
+                    mysqli_stmt_execute($get_token_id);
+                    mysqli_stmt_bind_result($get_token_id, $token_id);
+                    mysqli_stmt_fetch($get_token_id);
+                    mysqli_stmt_close($get_token_id);
 
-                $vote_log = mysqli_prepare($db, "INSERT INTO tb_vote_log (voter_id, nomor_kandidat, created_at) VALUES (?, ?, NOW())");
-                mysqli_stmt_bind_param($vote_log, "ii", $voter_id, $kandidat_terpilih);
-                mysqli_stmt_execute($vote_log);
-                mysqli_stmt_close($vote_log);
+                    $voter = mysqli_prepare($db, "INSERT INTO tb_voter (nama_voter, kelas, role, token_id, created_at) VALUES (?, ?, ?, ?, NOW())");
+                    mysqli_stmt_bind_param($voter, "sssi", $token_pemilih, $kelas_db, $role, $token_id);
 
-                $update = mysqli_prepare($db, "UPDATE tb_vote_result SET jumlah_vote = jumlah_vote + 1 WHERE nomor_kandidat = ?");
-                mysqli_stmt_bind_param($update, "i", $kandidat_terpilih);
-                mysqli_stmt_execute($update);
-                mysqli_stmt_close($update);
+                    mysqli_stmt_execute($voter);
+                    $voter_id = mysqli_insert_id($db);
+                    mysqli_stmt_close($voter);
 
-                mysqli_commit($db);
-                $successMessage = "Vote berhasil! Terima kasih sudah memilih.";
-            } catch (mysqli_sql_exception $e) {
-                mysqli_rollback($db);
-                $errorMessage = "Terjadi kesalahan: " . $e->getMessage();
+                    $vote_log = mysqli_prepare($db, "INSERT INTO tb_vote_log (voter_id, nomor_kandidat, created_at) VALUES (?, ?, NOW())");
+                    mysqli_stmt_bind_param($vote_log, "ii", $voter_id, $kandidat_terpilih);
+                    mysqli_stmt_execute($vote_log);
+                    mysqli_stmt_close($vote_log);
+
+                    $update = mysqli_prepare($db, "UPDATE tb_vote_result SET jumlah_vote = jumlah_vote + 1 WHERE nomor_kandidat = ?");
+                    mysqli_stmt_bind_param($update, "i", $kandidat_terpilih);
+                    mysqli_stmt_execute($update);
+                    mysqli_stmt_close($update);
+
+                    mysqli_commit($db);
+                    $successMessage = "Vote berhasil! Terima kasih sudah memilih.";
+                } catch (mysqli_sql_exception $e) {
+                    mysqli_rollback($db);
+                    $errorMessage = "Terjadi kesalahan: " . $e->getMessage();
+                }
             }
         }
     }
