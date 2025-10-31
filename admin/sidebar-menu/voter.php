@@ -25,7 +25,11 @@ $offsetGuru = ($pageGuru - 1) * $limit;
 $votersSiswa = [];
 $votersGuru = [];
 
-// hitung & ambil data vote untuk siswa
+// -----------------------------------------------------------
+// Bagian Siswa
+// -----------------------------------------------------------
+
+// hitung total siswa yang sudah vote
 $totalSiswaQuery = mysqli_query($db, "
     SELECT COUNT(*) as total
     FROM tb_voter v
@@ -36,6 +40,7 @@ $totalSiswaRow = mysqli_fetch_assoc($totalSiswaQuery);
 $totalSiswa = isset($totalSiswaRow['total']) ? (int)$totalSiswaRow['total'] : 0;
 $totalPagesSiswa = $totalSiswa > 0 ? ceil($totalSiswa / $limit) : 1;
 
+// ambil data vote untuk siswa
 $votedSiswaQuery = mysqli_query($db, "
     SELECT v.id, v.nama_voter, v.kelas, v.role, l.nomor_kandidat
     FROM tb_voter v
@@ -48,21 +53,38 @@ while ($row = mysqli_fetch_assoc($votedSiswaQuery)) {
     $votersSiswa[] = $row;
 }
 
-// hitung & ambil data vote untuk guru
-$totalGuruQuery = mysqli_query($db, "
-    SELECT COUNT(*) as total
+// -----------------------------------------------------------
+// Bagian Guru (MODIFIKASI: JOIN dengan tb_kode_guru)
+// -----------------------------------------------------------
+
+// 1. Hitung total guru yang terdaftar (target)
+$totalGuruTargetQuery = mysqli_query($db, "SELECT COUNT(*) as total FROM tb_kode_guru");
+$totalGuruTargetRow = mysqli_fetch_assoc($totalGuruTargetQuery);
+$totalGuruTarget = isset($totalGuruTargetRow['total']) ? (int)$totalGuruTargetRow['total'] : 0;
+
+// 2. Hitung total guru yang sudah vote DAN terdaftar di tb_kode_guru (untuk pagination)
+$totalGuruVotedQuery = mysqli_query($db, "
+    SELECT COUNT(DISTINCT v.id) as total
     FROM tb_voter v
     JOIN tb_vote_log l ON v.id = l.voter_id
+    JOIN tb_kode_guru g ON v.nama_voter = g.kode /* RELASI UTAMA */
     WHERE v.role = 'guru'
 ");
-$totalGuruRow = mysqli_fetch_assoc($totalGuruQuery);
+$totalGuruRow = mysqli_fetch_assoc($totalGuruVotedQuery);
 $totalGuru = isset($totalGuruRow['total']) ? (int)$totalGuruRow['total'] : 0;
 $totalPagesGuru = $totalGuru > 0 ? ceil($totalGuru / $limit) : 1;
 
+// **Variabel untuk Ringkasan Guru (Dihitung di sini untuk menghindari Undefined Variable)**
+// total guru yang sudah vote dan terdaftar (digunakan di bagian HTML bawah)
+$votedGuru = $totalGuru; 
+
+
+// 3. Ambil data vote untuk guru yang sudah vote DAN terdaftar di tb_kode_guru (untuk tabel)
 $votedGuruQuery = mysqli_query($db, "
     SELECT v.id, v.nama_voter, v.kelas, v.role, l.nomor_kandidat
     FROM tb_voter v
     JOIN tb_vote_log l ON v.id = l.voter_id
+    JOIN tb_kode_guru g ON v.nama_voter = g.kode /* RELASI UTAMA */
     WHERE v.role = 'guru'
     ORDER BY v.nama_voter
     LIMIT $limit OFFSET $offsetGuru
@@ -71,15 +93,18 @@ while ($row = mysqli_fetch_assoc($votedGuruQuery)) {
     $votersGuru[] = $row;
 }
 
+
+// -----------------------------------------------------------
+// Bagian Ringkasan Siswa
+// -----------------------------------------------------------
+
 // jumlah siswa setiap kelas
-$dataKelas = [
-    "X-1" => 21,
-    "X-2" => 18,
-    "XI-1" => 29,
-    "XI-2" => 17,
-    "XI-TJA" => 11,
-    "XII" => 29
-];
+$dataKelas = [];
+$qKelas = mysqli_query($db, "SELECT nama_kelas, jumlah_siswa FROM tb_kelas ORDER BY id ASC");
+while ($row = mysqli_fetch_assoc($qKelas)) {
+    $dataKelas[$row['nama_kelas']] = (int)$row['jumlah_siswa'];
+}
+
 
 $kelasSummary = [];
 foreach ($dataKelas as $kelas => $target) {
@@ -129,6 +154,7 @@ while ($row = mysqli_fetch_assoc($q)) {
     <meta charset="UTF-8">
     <title>Daftar Voter - Voting OSIS</title>
     <style>
+        /* CSS yang sudah ada */
         * {
             margin: 0;
             padding: 0;
@@ -277,8 +303,8 @@ while ($row = mysqli_fetch_assoc($q)) {
             <li><a href="../hasil-vote/result.php">Hasil</a></li>
             <li><a href="../kandidat/daftar.php">Daftar Kandidat</a></li>
             <li><a href="../sidebar-menu/voter.php" class="active">Daftar Voter</a></li>
-            <li><a href="../sidebar-menu/token.php">Kelas dan Token</a></li>
-            <li><a href="../sidebar-menu/kode-guru.php">Buat Kode Guru</a></li>
+            <li><a href="../sidebar-menu/token.php">Kelas dan Token Siswa</a></li>
+            <li><a href="../sidebar-menu/kode-guru.php">Buat Token Guru</a></li>
             <li><a href="../auth/logout.php">Logout</a></li>
         </ul>
     </div>
@@ -310,7 +336,6 @@ while ($row = mysqli_fetch_assoc($q)) {
             <?php endif; ?>
         </table>
 
-        <!-- pagination siswa -->
         <?php if ($totalPagesSiswa > 1): ?>
             <div class="pagination">
                 <?php for ($p = 1; $p <= $totalPagesSiswa; $p++): ?>
@@ -354,8 +379,10 @@ while ($row = mysqli_fetch_assoc($q)) {
                 </div>
             <?php endforeach; ?>
         </div>
+        
+        <hr>
 
-        <h1>Daftar voter untuk Guru</h1>
+        <h1>Daftar Voter Khusus Guru</h1>
         <table>
             <tr>
                 <th>No</th>
@@ -374,12 +401,11 @@ while ($row = mysqli_fetch_assoc($q)) {
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="4" style="text-align:center;">Belum ada guru yang memilih.</td>
+                    <td colspan="4" style="text-align:center;">Belum ada guru yang memilih, atau data guru sudah dihapus dari manajemen.</td>
                 </tr>
             <?php endif; ?>
         </table>
 
-        <!-- pagination guru -->
         <?php if ($totalPagesGuru > 1): ?>
             <div class="pagination">
                 <?php for ($p = 1; $p <= $totalPagesGuru; $p++): ?>
@@ -387,19 +413,26 @@ while ($row = mysqli_fetch_assoc($q)) {
                 <?php endfor; ?>
             </div>
         <?php endif; ?>
+
         <?php
+        // -----------------------------------------------------------
+        // Bagian Ringkasan Guru (Perhitungan Ringkasan)
+        // -----------------------------------------------------------
+
         $guruSummary = [
             "total" => 0,
             "kandidat" => []
         ];
 
+        // Hitung total suara per kandidat dari guru yang terdaftar
         $qGuru = mysqli_query($db, "
-    SELECT l.nomor_kandidat, COUNT(*) as total_suara
-    FROM tb_vote_log l
-    JOIN tb_voter v ON l.voter_id = v.id
-    WHERE v.role = 'guru'
-    GROUP BY l.nomor_kandidat
-");
+            SELECT l.nomor_kandidat, COUNT(*) as total_suara
+            FROM tb_vote_log l
+            JOIN tb_voter v ON l.voter_id = v.id
+            JOIN tb_kode_guru g ON v.nama_voter = g.kode /* RELASI UTAMA */
+            WHERE v.role = 'guru'
+            GROUP BY l.nomor_kandidat
+        ");
 
         while ($row = mysqli_fetch_assoc($qGuru)) {
             $nomor = $row['nomor_kandidat'];
@@ -408,26 +441,11 @@ while ($row = mysqli_fetch_assoc($q)) {
             $guruSummary["kandidat"][$nomor] = $jumlah;
             $guruSummary["total"] += $jumlah;
         }
-        ?>
-        <?php
-        // total guru yang terdaftar (target)
-        $totalGuruTarget = 25;
 
-        // hitung berapa guru sudah voting
-        $qGuruVoted = mysqli_query($db, "
-    SELECT COUNT(DISTINCT v.id) AS voted
-    FROM tb_voter v
-    JOIN tb_vote_log l ON v.id = l.voter_id
-    WHERE v.role = 'guru'
-");
-        $rowGuruVoted = mysqli_fetch_assoc($qGuruVoted);
-        $votedGuru = isset($rowGuruVoted['voted']) ? (int)$rowGuruVoted['voted'] : 0;
-
-        // hitung persentase
+        // Hitung persentase (menggunakan $totalGuruTarget dan $votedGuru yang sudah didefinisikan di bagian atas)
         $percentGuru = $totalGuruTarget > 0 ? round(($votedGuru / $totalGuruTarget) * 100, 2) : 0;
         ?>
 
-        <!-- Ringkasan Voting Guru -->
         <h3>Ringkasan Voting Guru</h3>
         <div class="kelas-grid">
             <div class="kelas-card">
