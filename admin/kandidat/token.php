@@ -226,7 +226,9 @@ if (isset($_POST['generate'])) {
             $created_by = mysqli_real_escape_string($db, $admin);
             $token_esc = mysqli_real_escape_string($db, $token);
 
-            $insert = mysqli_query($db, "INSERT INTO tb_buat_token (token, created_by) VALUES ('$token_esc', '$created_by')");
+            $insert = mysqli_query($db, "INSERT INTO tb_buat_token (token, kelas_id, created_by) 
+VALUES ('$token_esc', $kelas_id, '$created_by')");
+
             if ($insert) {
                 $message = "✅ Token berhasil dibuat untuk kelas <b>" . htmlspecialchars($kelas_nama) . "</b>: <b>$token</b>";
                 header("Location: " . preg_replace('/(\?.*)?$/', '', $_SERVER['REQUEST_URI']));
@@ -240,7 +242,13 @@ if (isset($_POST['generate'])) {
 
 // Reload kelas dan tokens untuk tampilan (ambil ulang dari DB)
 $kelasQuery = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY id ASC");
-$tokens = mysqli_query($db, "SELECT * FROM tb_buat_token ORDER BY created_at DESC");
+$tokens = mysqli_query($db, "
+    SELECT t.*, k.nama_kelas 
+    FROM tb_buat_token t
+    LEFT JOIN tb_kelas k ON t.kelas_id = k.id
+    ORDER BY t.created_at DESC
+");
+
 ?>
 
 <!DOCTYPE html>
@@ -401,19 +409,28 @@ $tokens = mysqli_query($db, "SELECT * FROM tb_buat_token ORDER BY created_at DES
         <table>
             <tr>
                 <th>No</th>
+                <th>Kelas</th>
                 <th>Token</th>
+                <th>Status</th>
                 <th>Aksi</th>
             </tr>
             <?php
             $no = 1;
             if (mysqli_num_rows($tokens) > 0):
                 while ($row = mysqli_fetch_assoc($tokens)):
+                    $status = $row['status_token'] === 'sudah'
+                        ? '<span style="color:green;font-weight:bold;">Sudah Digunakan</span>'
+                        : '<span style="color:red;font-weight:bold;">Belum Digunakan</span>';
+                    $kelasNama = $row['nama_kelas'] ?? '<i>Tidak Diketahui</i>';
             ?>
                     <tr>
                         <td><?= $no++; ?></td>
+                        <td><?= htmlspecialchars($kelasNama); ?></td>
                         <td><?= htmlspecialchars($row['token']); ?></td>
+                        <td><?= $status; ?></td>
                         <td>
-                            <a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete" onclick="return confirm('Hapus token ini?')">Hapus</a>
+                            <a href="?hapus_token=<?= $row['id']; ?>" class="btn-delete"
+                                onclick="return confirm('Hapus token ini?')">Hapus</a>
                         </td>
                     </tr>
                 <?php endwhile;
@@ -423,6 +440,8 @@ $tokens = mysqli_query($db, "SELECT * FROM tb_buat_token ORDER BY created_at DES
                 </tr>
             <?php endif; ?>
         </table>
+
+
     </div>
 </body>
 
