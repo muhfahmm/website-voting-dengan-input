@@ -535,18 +535,14 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
             const roleSelect = document.getElementById('role');
             const kelasWrap = document.getElementById('kelasWrap');
 
-            // Logika untuk menampilkan/menyembunyikan pilihan kelas
             roleSelect.addEventListener('change', () => {
-                // Jika role adalah 'siswa', tampilkan pilihan kelas
                 kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
 
-                // Opsional: Atur ulang nilai kelas ketika role berubah
                 if (roleSelect.value === 'guru') {
                     document.getElementById('kelas').value = '';
                 }
             });
 
-            // Set initial state
             kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
 
 
