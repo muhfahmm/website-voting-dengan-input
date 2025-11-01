@@ -360,9 +360,6 @@ while ($row = mysqli_fetch_assoc($q)) {
                 </div>
             <?php endforeach; ?>
         </div>
-
-        <hr>
-
         <h1>Daftar Voter Khusus Guru</h1>
         <table>
             <tr>
