@@ -446,6 +446,53 @@ $tokens = mysqli_query($db, "
                     </option>
                 <?php endforeach; ?>
             </select>
+                    <style>
+            .kelas-filter-form {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 12px;
+                margin: 25px 0;
+                padding: 14px 18px;
+                background: #ffffff;
+                border-radius: 8px;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+                font-family: "Poppins", sans-serif;
+                transition: box-shadow 0.3s ease;
+            }
+
+            .kelas-filter-form:hover {
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+            }
+
+            .kelas-filter-form label {
+                color: #2c3e50;
+                font-size: 15px;
+                font-weight: 600;
+                margin-right: 6px;
+            }
+
+            .kelas-filter-form select {
+                padding: 10px 14px;
+                font-size: 15px;
+                border: 1.5px solid #ccc;
+                border-radius: 8px;
+                outline: none;
+                background: #f9f9f9;
+                transition: all 0.2s ease;
+                cursor: pointer;
+            }
+
+            .kelas-filter-form select:focus {
+                border-color: #3498db;
+                background: #fff;
+                box-shadow: 0 0 5px rgba(52, 152, 219, 0.4);
+            }
+
+            .kelas-filter-form option {
+                padding: 10px;
+            }
+        </style>
         </form>
 
         <h3>Daftar Token</h3>
