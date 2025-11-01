@@ -314,7 +314,6 @@ $tokens = mysqli_query($db, "
             <div style="text-align:center;margin-bottom:15px;color:#2c3e50;"><?= $message; ?></div>
         <?php endif; ?>
 
-        <!-- Tambah Kelas -->
         <form method="POST" class="form-modern">
             <input type="text" name="kelas" placeholder="Masukkan nama kelas" required>
             <input type="number" name="jumlah_siswa" placeholder="Jumlah siswa" min="1" required>
@@ -376,10 +375,8 @@ $tokens = mysqli_query($db, "
                     transform: scale(1.03);
                 }
             </style>
-
         </form>
 
-        <!-- Daftar Kelas -->
         <h3>Daftar Kelas</h3>
         <table>
             <tr>
@@ -411,14 +408,12 @@ $tokens = mysqli_query($db, "
             <?php endif; ?>
         </table>
 
-        <!-- Pagination Kelas -->
         <div class="pagination">
             <?php for ($p = 1; $p <= $totalPagesKelas; $p++): ?>
                 <a href="?page_kelas=<?= $p ?>&page_token=<?= $pageToken ?>" class="<?= $p == $pageKelas ? 'active' : '' ?>"><?= $p ?></a>
             <?php endfor; ?>
         </div>
 
-        <!-- Daftar Token -->
         <h3>Daftar Token</h3>
         <table>
             <tr>
@@ -444,8 +439,6 @@ $tokens = mysqli_query($db, "
                 </tr>
             <?php endif; ?>
         </table>
-
-        <!-- Pagination Token -->
         <div class="pagination">
             <?php for ($p = 1; $p <= $totalPagesToken; $p++): ?>
                 <a href="?page_token=<?= $p ?>&page_kelas=<?= $pageKelas ?>" class="<?= $p == $pageToken ? 'active' : '' ?>"><?= $p ?></a>
