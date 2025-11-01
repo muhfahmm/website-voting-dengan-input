@@ -136,17 +136,41 @@ if (isset($_POST['generate'])) {
     }
 }
 
-$totalTokenResult = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_buat_token");
-$totalToken = mysqli_fetch_assoc($totalTokenResult)['total'] ?? 0;
-$totalPagesToken = max(1, ceil($totalToken / $limit));
+// Ambil kelas yang sedang dipilih
+$kelasTerpilih = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : 0;
 
+// Jika tidak ada kelas terpilih, ambil kelas pertama di daftar
+if ($kelasTerpilih === 0 && !empty($kelasList)) {
+    $kelasTerpilih = (int)$kelasList[0]['id'];
+}
+
+// Ambil data kelas terpilih
+$kelasData = mysqli_query($db, "SELECT * FROM tb_kelas WHERE id = $kelasTerpilih");
+$kelasRow = mysqli_fetch_assoc($kelasData);
+
+// Jumlah siswa di kelas tersebut digunakan sebagai limit
+$limitToken = isset($kelasRow['jumlah_siswa']) ? (int)$kelasRow['jumlah_siswa'] : 10;
+
+// Pagination token khusus kelas terpilih
+$pageToken = isset($_GET['page_token']) ? (int)$_GET['page_token'] : 1;
+if ($pageToken < 1) $pageToken = 1;
+$offsetToken = ($pageToken - 1) * $limitToken;
+
+// Hitung total token per kelas
+$totalTokenResult = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_buat_token WHERE kelas_id = $kelasTerpilih");
+$totalToken = mysqli_fetch_assoc($totalTokenResult)['total'] ?? 0;
+$totalPagesToken = max(1, ceil($totalToken / $limitToken));
+
+// Ambil token berdasarkan kelas terpilih
 $tokens = mysqli_query($db, "
     SELECT t.*, k.nama_kelas 
     FROM tb_buat_token t
     LEFT JOIN tb_kelas k ON t.kelas_id = k.id
+    WHERE t.kelas_id = $kelasTerpilih
     ORDER BY t.created_at DESC
-    LIMIT $limit OFFSET $offsetToken
+    LIMIT $limitToken OFFSET $offsetToken
 ");
+
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -413,6 +437,16 @@ $tokens = mysqli_query($db, "
                 <a href="?page_kelas=<?= $p ?>&page_token=<?= $pageToken ?>" class="<?= $p == $pageKelas ? 'active' : '' ?>"><?= $p ?></a>
             <?php endfor; ?>
         </div>
+        <form method="GET" class="kelas-filter-form">
+            <label for="kelas_id"><b>Pilih Kelas:</b></label>
+            <select name="kelas_id" id="kelas_id" onchange="this.form.submit()">
+                <?php foreach ($kelasList as $k): ?>
+                    <option value="<?= $k['id']; ?>" <?= $k['id'] == $kelasTerpilih ? 'selected' : ''; ?>>
+                        <?= htmlspecialchars($k['nama_kelas']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </form>
 
         <h3>Daftar Token</h3>
         <table>
