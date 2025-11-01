@@ -64,7 +64,7 @@ $totalGuruRow = mysqli_fetch_assoc($totalGuruVotedQuery);
 $totalGuru = isset($totalGuruRow['total']) ? (int)$totalGuruRow['total'] : 0;
 $totalPagesGuru = $totalGuru > 0 ? ceil($totalGuru / $limit) : 1;
 
-$votedGuru = $totalGuru; 
+$votedGuru = $totalGuru;
 
 $votedGuruQuery = mysqli_query($db, "
     SELECT v.id, v.nama_voter, v.kelas, v.role, l.nomor_kandidat
@@ -360,7 +360,7 @@ while ($row = mysqli_fetch_assoc($q)) {
                 </div>
             <?php endforeach; ?>
         </div>
-        
+
         <hr>
 
         <h1>Daftar Voter Khusus Guru</h1>
