@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'db/db.php'; // Pastikan path ke file koneksi database sudah benar
+require 'db/db.php';
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     $token_pemilih      = trim($_POST['token_pemilih'] ?? '');
@@ -76,22 +76,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
         if (!$token_db_id) {
             $errorMessage = "Kode/Token tidak terdaftar.";
         }
-
         if (empty($errorMessage) && $token_db_id) {
-
             $is_already_used = false;
-
             if ($status_check === 'sudah') {
                 $is_already_used = true;
             }
-
             if ($is_already_used) {
                 $tokenUsedMessage = "Kode/Token sudah digunakan.";
             } else {
                 mysqli_begin_transaction($db);
                 try {
                     $kelas_voter = ($role === 'siswa') ? $kelas_pemilih : $nama_token;
-
                     $sql_voter = "
                         INSERT INTO tb_voter 
                         (nama_voter, kelas, role, token_id, kode_guru_id, created_at) 
@@ -140,10 +135,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                     mysqli_stmt_close($update);
 
                     if ($token_table_name === 'tb_buat_token') {
-                        // Update status token siswa
                         mysqli_query($db, "UPDATE tb_buat_token SET status_token = 'sudah' WHERE id = $token_db_id");
                     } elseif ($token_table_name === 'tb_kode_guru') {
-                        // Update status kode guru
                         mysqli_query($db, "UPDATE tb_kode_guru SET status_kode = 'sudah' WHERE id = $token_db_id");
                     }
 
@@ -158,7 +151,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     }
 }
 
-// Data untuk tampilan (Tidak diubah)
 $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat ASC");
 $query_kelas = mysqli_query($db, "SELECT * FROM tb_kelas ORDER BY nama_kelas ASC");
 $kelas_list = [];
@@ -176,7 +168,6 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
     <link rel="icon" href="admin/assets/img/logo osis.png">
     <link rel="stylesheet" href="assets/css/global.css">
     <style>
-        /* CSS DARI KODE ASLI ANDA */
         body {
             font-family: Arial, sans-serif;
             background: #f4f6f9;
@@ -406,7 +397,6 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
                 <div class="btn-login">
                     <button class="user-login" name="login" onclick="window.open('admin/auth/login.php', '_blank')">hanya admin</button>
                     <style>
-                        /* CSS login admin */
                         .btn-login button {
                             background: none;
                             border: none;
@@ -433,7 +423,6 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
                 <img src="pages/assets/img/logo osis.png">
                 <img src="pages/assets/img/logo sekolah.png">
                 <style>
-                    /* CSS logo */
                     .logo {
                         width: 100%;
                         display: flex;
