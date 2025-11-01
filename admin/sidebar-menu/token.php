@@ -446,8 +446,6 @@ $tokens = mysqli_query($db, "
                     align-items: center;
                     justify-content: flex-start;
                     gap: 12px;
-                    margin: 25px 0;
-                    padding: 14px 18px;
                     border-radius: 8px;
                     font-family: "Poppins", sans-serif;
                     transition: box-shadow 0.3s ease;
