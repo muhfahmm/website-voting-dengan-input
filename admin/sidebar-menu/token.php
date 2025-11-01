@@ -136,22 +136,17 @@ if (isset($_POST['generate'])) {
     }
 }
 
-// Ambil kelas yang sedang dipilih
 $kelasTerpilih = isset($_GET['kelas_id']) ? (int)$_GET['kelas_id'] : 0;
 
-// Jika tidak ada kelas terpilih, ambil kelas pertama di daftar
 if ($kelasTerpilih === 0 && !empty($kelasList)) {
     $kelasTerpilih = (int)$kelasList[0]['id'];
 }
 
-// Ambil data kelas terpilih
 $kelasData = mysqli_query($db, "SELECT * FROM tb_kelas WHERE id = $kelasTerpilih");
 $kelasRow = mysqli_fetch_assoc($kelasData);
 
-// Jumlah siswa di kelas tersebut digunakan sebagai limit
 $limitToken = isset($kelasRow['jumlah_siswa']) ? (int)$kelasRow['jumlah_siswa'] : 10;
 
-// Pagination token khusus kelas terpilih
 $pageToken = isset($_GET['page_token']) ? (int)$_GET['page_token'] : 1;
 if ($pageToken < 1) $pageToken = 1;
 $offsetToken = ($pageToken - 1) * $limitToken;
@@ -161,7 +156,6 @@ $totalTokenResult = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_buat_tok
 $totalToken = mysqli_fetch_assoc($totalTokenResult)['total'] ?? 0;
 $totalPagesToken = max(1, ceil($totalToken / $limitToken));
 
-// Ambil token berdasarkan kelas terpilih
 $tokens = mysqli_query($db, "
     SELECT t.*, k.nama_kelas 
     FROM tb_buat_token t
