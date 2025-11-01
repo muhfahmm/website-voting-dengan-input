@@ -462,7 +462,7 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
         <div class="form-user">
             <form action="" method="post" id="formVote" novalidate>
                 <label for="pemilih" style="font-weight: bold;">Token Pemilih</label>
-                <input type="text" id="pemilih" name="token_pemilih" placeholder="Masukkan Token/Kode" autocomplete="off">
+                <input type="text" id="pemilih" name="token_pemilih" placeholder="Masukkan Token" autocomplete="off">
 
                 <label for="role" style="font-weight: bold;">Role</label>
                 <select id="role" name="role">

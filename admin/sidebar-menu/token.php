@@ -335,7 +335,7 @@ $tokens = mysqli_query($db, "
         <form method="POST" class="form-modern">
             <input type="text" name="kelas" placeholder="Masukkan nama kelas" required>
             <input type="number" name="jumlah_siswa" placeholder="Jumlah siswa" min="1" required>
-            <button type="submit" name="add_class" class="btn btn-blue">Tambah</button>
+            <button type="submit" name="add_class" class="btn btn-blue">Tambah Kelas</button>
             <style>
                 .form-modern {
                     margin: 40px auto;
