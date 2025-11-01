@@ -454,15 +454,9 @@ $tokens = mysqli_query($db, "
                 gap: 12px;
                 margin: 25px 0;
                 padding: 14px 18px;
-                background: #ffffff;
                 border-radius: 8px;
-                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
                 font-family: "Poppins", sans-serif;
                 transition: box-shadow 0.3s ease;
-            }
-
-            .kelas-filter-form:hover {
-                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
             }
 
             .kelas-filter-form label {
