@@ -10,17 +10,19 @@ if (!isset($_SESSION['login'])) {
 
 $admin = $_SESSION['username'];
 
-$dataKelas = [
-    "X-1" => 21,
-    "X-2" => 18,
-    "XI-1" => 29,
-    "XI-2" => 17,
-    "XI-TJA" => 11,
-    "XII" => 29
-];
+/* ================================
+   🔹 Ambil data kelas dari database
+   ================================ */
+$dataKelas = [];
+$resultKelas = mysqli_query($db, "SELECT nama_kelas, jumlah_siswa FROM tb_kelas ORDER BY nama_kelas ASC");
+while ($row = mysqli_fetch_assoc($resultKelas)) {
+    $dataKelas[$row['nama_kelas']] = (int)$row['jumlah_siswa'];
+}
 $total_siswa = array_sum($dataKelas);
 
-// Ambil data kandidat beserta jumlah suara
+/* ================================
+   🔹 Ambil data kandidat beserta jumlah suara
+   ================================ */
 $query = mysqli_query($db, "
     SELECT k.nomor_kandidat, k.nama_ketua, k.nama_wakil, COUNT(v.id) AS total_suara
     FROM tb_kandidat k
@@ -40,15 +42,16 @@ while ($row = mysqli_fetch_assoc($query)) {
 // Reset pointer untuk diagram bar custom
 mysqli_data_seek($query, 0);
 
-// Hitung total siswa & guru yang sudah voting
+/* ================================
+   🔹 Hitung total siswa & guru voting
+   ================================ */
 $totalVotesSiswaQuery = mysqli_query($db, "
     SELECT COUNT(DISTINCT v.id) AS total 
     FROM tb_voter v
     JOIN tb_vote_log l ON v.id = l.voter_id
     WHERE v.role = 'siswa'
 ");
-$totalVotesSiswaRow = mysqli_fetch_assoc($totalVotesSiswaQuery);
-$totalVotesSiswa = isset($totalVotesSiswaRow['total']) ? (int)$totalVotesSiswaRow['total'] : 0;
+$totalVotesSiswa = (int)mysqli_fetch_assoc($totalVotesSiswaQuery)['total'];
 
 $totalVotesGuruQuery = mysqli_query($db, "
     SELECT COUNT(DISTINCT v.id) AS total 
@@ -56,18 +59,22 @@ $totalVotesGuruQuery = mysqli_query($db, "
     JOIN tb_vote_log l ON v.id = l.voter_id
     WHERE v.role = 'guru'
 ");
-$totalVotesGuruRow = mysqli_fetch_assoc($totalVotesGuruQuery);
-$totalVotesGuru = isset($totalVotesGuruRow['total']) ? (int)$totalVotesGuruRow['total'] : 0;
-// Hitung total semua suara
+$totalVotesGuru = (int)mysqli_fetch_assoc($totalVotesGuruQuery)['total'];
+
+/* ================================
+   🔹 Hitung total semua suara
+   ================================ */
 $totalQuery = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_vote_log");
-$totalRow = mysqli_fetch_assoc($totalQuery);
-$totalVotes = $totalRow['total'];
+$totalVotes = (int)mysqli_fetch_assoc($totalQuery)['total'];
 
+/* ================================
+   🔹 Total target dinamis
+   ================================ */
+$totalSiswaTarget = $total_siswa; // total siswa dari tb_kelas
 
-$totalSiswaTarget = array_sum($dataKelas); // total dari semua kelas siswa
-$totalGuruTarget = 25; // total guru tetap
-
-
+// total guru dari tb_kode_guru
+$guruResult = mysqli_query($db, "SELECT COUNT(*) AS total_guru FROM tb_kode_guru");
+$totalGuruTarget = (int)mysqli_fetch_assoc($guruResult)['total_guru'];
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -85,20 +92,16 @@ $totalGuruTarget = 25; // total guru tetap
             color: #fff;
             padding: 20px;
         }
-
         .sidebar h2 {
             text-align: center;
             margin-bottom: 20px;
         }
-
         .sidebar ul {
             list-style: none;
         }
-
         .sidebar ul li {
             margin: 15px 0;
         }
-
         .sidebar ul li a {
             color: #fff;
             text-decoration: none;
@@ -107,25 +110,18 @@ $totalGuruTarget = 25; // total guru tetap
             border-radius: 5px;
             transition: 0.3s;
         }
-
-        .sidebar ul li a:hover {
-            background: #34495e;
-        }
-
+        .sidebar ul li a:hover,
         .sidebar ul li a.active {
             background: #34495e;
         }
-
         .main-content {
             flex: 1;
             padding: 20px;
         }
-
         .bar-chart {
             margin-top: 20px;
             margin-bottom: 100px;
         }
-
         .bar {
             margin: 15px 0;
             background: #eee;
@@ -135,9 +131,8 @@ $totalGuruTarget = 25; // total guru tetap
             padding: 5px;
             width: 100%;
         }
-
         .bar-fill {
-            height: 40px;
+            height: 60px;
             border-radius: 4px;
             background: #3498db;
             position: relative;
@@ -147,25 +142,17 @@ $totalGuruTarget = 25; // total guru tetap
             justify-content: center;
             align-items: center;
         }
-
         .bar-percent {
-            font-size: 13px;
+            font-size: 20px;
             font-weight: bold;
             color: #fff;
         }
-
         .bar-name {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
             margin-right: 10px;
         }
-
-        .result-container {
-            display: flex;
-            justify-content: space-between;
-        }
-
         .chart-container {
             width: 35%;
             margin: 20px;
@@ -191,28 +178,25 @@ $totalGuruTarget = 25; // total guru tetap
 
     <div class="main-content">
         <h2 style="margin-bottom: 20px; text-align:center;">Hasil Sementara</h2>
-        <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px; margin-bottom:10px;">
-            Total Siswa: <?= $totalSiswaTarget; ?> | Sudah Voting: <?= $totalVotesSiswa; ?> | Belum Voting: <?= $totalSiswaTarget - $totalVotesSiswa; ?>
+        <div class="summary-box" style="text-align:center;font-weight:600;font-size:18px;margin-bottom:10px;">
+            Total Siswa: <?= $totalSiswaTarget; ?> | Sudah Voting: <?= $totalVotesSiswa; ?> | Belum Voting: <?= max(0, $totalSiswaTarget - $totalVotesSiswa); ?>
         </div>
 
-        <div class="summary-box" style="text-align: center; font-weight:600; font-size:18px;">
-            Total Guru: <?= $totalGuruTarget; ?> | Sudah Voting: <?= $totalVotesGuru; ?> | Belum Voting: <?= $totalGuruTarget - $totalVotesGuru; ?>
+        <div class="summary-box" style="text-align:center;font-weight:600;font-size:18px;">
+            Total Guru: <?= $totalGuruTarget; ?> | Sudah Voting: <?= $totalVotesGuru; ?> | Belum Voting: <?= max(0, $totalGuruTarget - $totalVotesGuru); ?>
         </div>
 
+        <div class="chart-container"><canvas id="pieChart"></canvas></div>
+        <div class="chart-container"><canvas id="barChart"></canvas></div>
 
-        <div class="chart-container">
-            <canvas id="pieChart"></canvas>
-        </div>
-        <div class="chart-container">
-            <canvas id="barChart"></canvas>
-        </div>
         <div class="bar-chart">
             <?php
+            mysqli_data_seek($query, 0); // pastikan ulang pointer ke awal
             while ($row = mysqli_fetch_assoc($query)) {
                 $persentase = $totalVotes > 0 ? round(($row['total_suara'] / $totalVotes) * 100, 2) : 0;
             ?>
                 <div class="bar">
-                    <span class="bar-name"><?= $row['nama_ketua']; ?> & <?= $row['nama_wakil']; ?></span>
+                    <span class="bar-name"><?= htmlspecialchars($row['nama_ketua']); ?> & <?= htmlspecialchars($row['nama_wakil']); ?></span>
                     <div class="bar-fill" style="width: <?= $persentase; ?>%;">
                         <span class="bar-percent"><?= $persentase; ?>%</span>
                     </div>
@@ -222,8 +206,8 @@ $totalGuruTarget = 25; // total guru tetap
     </div>
 
     <script>
-        const labels = <?php echo json_encode($labels); ?>;
-        const dataVotes = <?php echo json_encode($dataVotes); ?>;
+        const labels = <?= json_encode($labels); ?>;
+        const dataVotes = <?= json_encode($dataVotes); ?>;
 
         // Pie Chart
         new Chart(document.getElementById('pieChart'), {
@@ -237,8 +221,7 @@ $totalGuruTarget = 25; // total guru tetap
             }
         });
 
-
-        // Bar Chart Vertikal
+        // Bar Chart
         new Chart(document.getElementById('barChart'), {
             type: 'bar',
             data: {
@@ -253,14 +236,11 @@ $totalGuruTarget = 25; // total guru tetap
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
+                        ticks: { stepSize: 1 }
                     }
                 }
             }
         });
     </script>
 </body>
-
 </html>

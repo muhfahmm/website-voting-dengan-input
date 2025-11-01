@@ -261,25 +261,25 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             <h2>Tambah Kandidat Baru</h2>
             <form action="../api/proses-tambah.php" method="post" enctype="multipart/form-data">
                 <label for="nomor_kandidat">Nomor Kandidat</label>
-                <input type="number" id="nomor_kandidat" name="nomor_kandidat" placeholder="Masukkan nomor kandidat..." required>
+                <input type="number" id="nomor_kandidat" name="nomor_kandidat" placeholder="Masukkan nomor kandidat..." required autocomplete="off">
 
                 <label for="nama_ketua">Nama Ketua</label>
-                <input type="text" id="nama_ketua" name="nama_ketua" placeholder="Masukkan nama ketua..." required>
+                <input type="text" id="nama_ketua" name="nama_ketua" placeholder="Masukkan nama ketua..." required autocomplete="off">
 
                 <label for="kelas_ketua">Kelas Ketua</label>
-                <input type="text" id="kelas_ketua" name="kelas_ketua" placeholder="Masukkan kelas ketua..." required>
+                <input type="text" id="kelas_ketua" name="kelas_ketua" placeholder="Masukkan kelas ketua..." required autocomplete="off">
 
                 <label for="foto_ketua">Foto Ketua</label>
-                <input type="file" id="foto_ketua" name="foto_ketua" required>
+                <input type="file" id="foto_ketua" name="foto_ketua" required autocomplete="off">
 
                 <label for="nama_wakil">Nama Wakil</label>
-                <input type="text" id="nama_wakil" name="nama_wakil" placeholder="Masukkan nama wakil..." required>
+                <input type="text" id="nama_wakil" name="nama_wakil" placeholder="Masukkan nama wakil..." required autocomplete="off">
 
                 <label for="kelas_wakil">Kelas Wakil</label>
-                <input type="text" id="kelas_wakil" name="kelas_wakil" placeholder="Masukkan kelas wakil..." required>
+                <input type="text" id="kelas_wakil" name="kelas_wakil" placeholder="Masukkan kelas wakil..." required autocomplete="off">
 
                 <label for="foto_wakil">Foto Wakil</label>
-                <input type="file" id="foto_wakil" name="foto_wakil" required>
+                <input type="file" id="foto_wakil" name="foto_wakil" required autocomplete="off">
 
                 <button type="submit">💾 Simpan Kandidat</button>
             </form>
