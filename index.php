@@ -11,9 +11,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
     $errorMessage = "";
     $successMessage = "";
     $tokenUsedMessage = "";
-    
-    $voter_token_id = null; 
-    $voter_kode_guru_id = null; 
+
+    $voter_token_id = null;
+    $voter_kode_guru_id = null;
 
     if ($token_pemilih === '' || $kandidat_terpilih <= 0) {
         $errorMessage = "Token dan kandidat wajib diisi!";
@@ -41,7 +41,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
             mysqli_stmt_close($token_check);
 
             if ($token_db_id) {
-                $voter_token_id = $token_db_id; 
+                $voter_token_id = $token_db_id;
                 $voter_kode_guru_id = null;
                 $nama_token = $nama_kelas_token;
                 $token_table_name = 'tb_buat_token';
@@ -51,7 +51,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                     $errorMessage = "Token tidak cocok dengan kelas yang dipilih!";
                 }
             }
-
         } elseif ($role === 'guru') {
             $kode_guru_check = mysqli_prepare($db, "
                 SELECT id, status_kode 
@@ -63,12 +62,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
             mysqli_stmt_bind_result($kode_guru_check, $token_db_id_guru, $status_kode);
             mysqli_stmt_fetch($kode_guru_check);
             mysqli_stmt_close($kode_guru_check);
-            
+
             if ($token_db_id_guru) {
                 $token_db_id = $token_db_id_guru;
-                $voter_kode_guru_id = $token_db_id_guru; 
+                $voter_kode_guru_id = $token_db_id_guru;
                 $voter_token_id = null;
-                $nama_token = 'Guru/Staf'; 
+                $nama_token = 'Guru/Staf';
                 $token_table_name = 'tb_kode_guru';
                 $status_check = $status_kode;
             }
@@ -76,10 +75,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
 
         if (!$token_db_id) {
             $errorMessage = "Kode/Token tidak terdaftar.";
-        } 
-        
+        }
+
         if (empty($errorMessage) && $token_db_id) {
-            
+
             $is_already_used = false;
 
             if ($status_check === 'sudah') {
@@ -92,7 +91,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                 mysqli_begin_transaction($db);
                 try {
                     $kelas_voter = ($role === 'siswa') ? $kelas_pemilih : $nama_token;
-                    
+
                     $sql_voter = "
                         INSERT INTO tb_voter 
                         (nama_voter, kelas, role, token_id, kode_guru_id, created_at) 
@@ -112,7 +111,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['kirim'])) {
                         mysqli_stmt_execute($voter_siswa);
                         $voter_id = mysqli_insert_id($db);
                         mysqli_stmt_close($voter_siswa);
-
                     } elseif ($role === 'guru') {
                         $voter_kode_guru_id_val = $voter_kode_guru_id;
                         $sql_voter_guru = "
@@ -171,6 +169,7 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <title>Voting Kandidat OSIS</title>
@@ -475,27 +474,27 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
             <form action="" method="post" id="formVote" novalidate>
                 <label for="pemilih" style="font-weight: bold;">Token Pemilih</label>
                 <input type="text" id="pemilih" name="token_pemilih" placeholder="Masukkan Token/Kode" autocomplete="off">
-                
+
                 <label for="role" style="font-weight: bold;">Role</label>
                 <select id="role" name="role">
                     <option value="siswa" selected>Siswa</option>
                     <option value="guru" <?= (isset($_POST['role']) && $_POST['role'] === 'guru') ? 'selected' : '' ?>>Guru</option>
                 </select>
-                
+
                 <div id="kelasWrap" style="margin: 10px 0;">
                     <label for="kelas" style="font-weight: bold;">Kelas Pemilih</label>
                     <br>
                     <select id="kelas" name="kelas" class="pilih-kelas">
                         <option value="">Pilih Kelas</option>
                         <?php foreach ($kelas_list as $kelas): ?>
-                            <option value="<?= htmlspecialchars($kelas['nama_kelas']) ?>" 
+                            <option value="<?= htmlspecialchars($kelas['nama_kelas']) ?>"
                                 <?= (isset($_POST['kelas']) && $_POST['kelas'] === $kelas['nama_kelas']) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($kelas['nama_kelas']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <input type="hidden" name="kandidat_terpilih" id="kandidat_terpilih">
                 <button type="submit" name="kirim">Kirim Vote</button>
             </form>
@@ -540,13 +539,13 @@ while ($k = mysqli_fetch_assoc($query_kelas)) {
             roleSelect.addEventListener('change', () => {
                 // Jika role adalah 'siswa', tampilkan pilihan kelas
                 kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
-                
+
                 // Opsional: Atur ulang nilai kelas ketika role berubah
                 if (roleSelect.value === 'guru') {
-                    document.getElementById('kelas').value = ''; 
+                    document.getElementById('kelas').value = '';
                 }
             });
-            
+
             // Set initial state
             kelasWrap.style.display = (roleSelect.value === 'siswa') ? 'block' : 'none';
 
