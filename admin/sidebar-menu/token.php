@@ -387,11 +387,6 @@ $tokens = mysqli_query($db, "
                     cursor: pointer;
                     transition: background-color 0.3s ease, transform 0.2s;
                 }
-
-                .btn.btn-blue:hover {
-                    background-color: #2980b9;
-                    transform: scale(1.03);
-                }
             </style>
         </form>
 
