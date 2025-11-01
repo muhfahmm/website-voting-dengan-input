@@ -1,6 +1,6 @@
 <?php
 session_start();
-require '../../db/db.php'; // Koneksi database
+require '../../db/db.php';
 
 if (!isset($_SESSION['login'])) {
     header("Location: ../auth/login.php");
@@ -10,9 +10,6 @@ if (!isset($_SESSION['login'])) {
 $admin = $_SESSION['username'];
 $message = '';
 
-/* ======================
-   TAMBAH KODE GURU MANUAL
-   ====================== */
 if (isset($_POST['tambah_kode'])) {
     $kode_manual = trim($_POST['kode_manual'] ?? '');
 
@@ -21,10 +18,8 @@ if (isset($_POST['tambah_kode'])) {
     } else {
         $kode_esc = mysqli_real_escape_string($db, $kode_manual);
 
-        // Cek apakah kode sudah ada
         $check = mysqli_query($db, "SELECT id FROM tb_kode_guru WHERE kode = '$kode_esc'");
         if (mysqli_num_rows($check) == 0) {
-            // Validasi hanya huruf dan angka
             if (!preg_match('/^[a-zA-Z0-9]+$/', $kode_manual)) {
                 $message = "⚠️ Kode Guru hanya boleh berisi huruf dan angka (tanpa spasi/simbol).";
             } else {
@@ -48,9 +43,6 @@ if (isset($_POST['tambah_kode'])) {
     }
 }
 
-/* ======================
-   HAPUS KODE GURU
-   ====================== */
 if (isset($_GET['hapus_kode'])) {
     $id_kode = (int)$_GET['hapus_kode'];
     $check = mysqli_query($db, "SELECT kode FROM tb_kode_guru WHERE id = $id_kode");
@@ -59,12 +51,10 @@ if (isset($_GET['hapus_kode'])) {
         $r = mysqli_fetch_assoc($check);
         $kode = $r['kode'];
 
-        // Hitung berapa voter guru yang akan ikut terhapus otomatis
         $count_voter = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_voter WHERE kode_guru_id = $id_kode");
         $count_row = mysqli_fetch_assoc($count_voter);
         $total_voter = (int)$count_row['total'];
 
-        // Hapus Kode Guru (otomatis menghapus voter terkait via ON DELETE CASCADE)
         $delete_stmt = mysqli_prepare($db, "DELETE FROM tb_kode_guru WHERE id = ?");
         mysqli_stmt_bind_param($delete_stmt, "i", $id_kode);
         $hapus = mysqli_stmt_execute($delete_stmt);
@@ -82,24 +72,18 @@ if (isset($_GET['hapus_kode'])) {
     }
 }
 
-// Ambil pesan dari redirect (jika ada)
 if (isset($_GET['msg'])) {
     $message = urldecode($_GET['msg']);
 }
 
-/* ======================
-   STATISTIK KODE GURU
-   ====================== */
 $total_kode = 0;
 $sudah_digunakan = 0;
 $belum_digunakan = 0;
 
-// Hitung total
 $q_total = mysqli_query($db, "SELECT COUNT(id) AS total FROM tb_kode_guru");
 $r_total = mysqli_fetch_assoc($q_total);
 $total_kode = (int)$r_total['total'];
 
-// Hitung sudah digunakan
 $q_sudah = mysqli_query($db, "
     SELECT COUNT(DISTINCT g.id) AS sudah 
     FROM tb_kode_guru g 
@@ -108,10 +92,8 @@ $q_sudah = mysqli_query($db, "
 $r_sudah = mysqli_fetch_assoc($q_sudah);
 $sudah_digunakan = (int)$r_sudah['sudah'];
 
-// Hitung belum digunakan
 $belum_digunakan = $total_kode - $sudah_digunakan;
 
-// Ambil semua data kode guru
 $kodeGuruQuery = mysqli_query($db, "
     SELECT g.*, v.id AS voter_id
     FROM tb_kode_guru g
