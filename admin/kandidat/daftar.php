@@ -29,7 +29,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             background: #f4f6f9;
         }
 
-        /* Sidebar */
         .sidebar {
             width: 220px;
             background: #2c3e50;
@@ -64,7 +63,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             background: #34495e;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             padding: 40px;
@@ -76,7 +74,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             margin-bottom: 30px;
         }
 
-        /* Kandidat List */
         .kandidat-container {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -156,7 +153,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
             background: #c0392b;
         }
 
-        /* Form Tambah Kandidat */
         .form-container {
             background: #fff;
             padding: 25px 30px;
@@ -221,7 +217,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 </head>
 
 <body>
-    <!-- Sidebar -->
     <div class="sidebar">
         <div>
             <h2>Admin Panel</h2>
@@ -238,7 +233,6 @@ $query = mysqli_query($db, "SELECT * FROM tb_kandidat ORDER BY nomor_kandidat AS
 
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <h1>Daftar Kandidat OSIS</h1>
 
