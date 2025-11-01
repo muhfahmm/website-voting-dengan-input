@@ -381,7 +381,7 @@ $tokens = mysqli_query($db, "
                     color: #fff;
                     border: none;
                     border-radius: 8px;
-                    padding: 12px;
+                    padding: 5px 10px;
                     font-size: 16px;
                     font-weight: 600;
                     cursor: pointer;
@@ -501,11 +501,11 @@ $tokens = mysqli_query($db, "
                 </tr>
             <?php endif; ?>
         </table>
-        <div class="pagination">
+        <!-- <div class="pagination">
             <?php for ($p = 1; $p <= $totalPagesToken; $p++): ?>
                 <a href="?page_token=<?= $p ?>&page_kelas=<?= $pageKelas ?>" class="<?= $p == $pageToken ? 'active' : '' ?>"><?= $p ?></a>
             <?php endfor; ?>
-        </div>
+        </div> -->
     </div>
 </body>
 
