@@ -10,7 +10,6 @@ if (!isset($_SESSION['login'])) {
 
 $admin = $_SESSION['username'];
 
-// Ambil data kandidat beserta jumlah suara
 $query = mysqli_query($db, "
     SELECT k.nomor_kandidat, k.nama_ketua, k.nama_wakil, COUNT(v.id) AS total_suara
     FROM tb_kandidat k
@@ -19,7 +18,6 @@ $query = mysqli_query($db, "
     ORDER BY k.nomor_kandidat ASC
 ");
 
-// Hitung total suara
 $totalQuery = mysqli_query($db, "SELECT COUNT(*) AS total FROM tb_vote_log");
 $totalRow = mysqli_fetch_assoc($totalQuery);
 $totalVotes = $totalRow['total'];

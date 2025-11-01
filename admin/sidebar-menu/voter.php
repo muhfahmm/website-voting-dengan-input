@@ -135,7 +135,6 @@ while ($row = mysqli_fetch_assoc($q)) {
     <meta charset="UTF-8">
     <title>Daftar Voter - Voting OSIS</title>
     <style>
-        /* CSS yang sudah ada */
         * {
             margin: 0;
             padding: 0;
