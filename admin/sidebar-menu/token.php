@@ -432,7 +432,7 @@ $tokens = mysqli_query($db, "
             <?php endfor; ?>
         </div>
         <form method="GET" class="kelas-filter-form">
-            <label for="kelas_id"><b>Pilih Kelas:</b></label>
+            <label for="kelas_id"><b>Filter token berdasarkan kelas:</b></label>
             <select name="kelas_id" id="kelas_id" onchange="this.form.submit()">
                 <?php foreach ($kelasList as $k): ?>
                     <option value="<?= $k['id']; ?>" <?= $k['id'] == $kelasTerpilih ? 'selected' : ''; ?>>
